@@ -22,21 +22,17 @@
 extern crate gl;
 extern crate sdl2;
 
-mod shaders;
-mod mesh;
-mod texture;
-mod gl_renderer;
-mod byte_buffer_reader;
+mod internal;
+pub mod mesh;
+pub mod texture;
 pub mod game_status;
 pub mod scene;
-pub mod color;
 pub mod input;
 pub mod renderer;
-pub mod rsfx_context;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
-use crate::rsfx_context::RsfxContext;
+use crate::internal::rsfx_context::RsfxContext;
 
 pub struct Rsfx;
 
@@ -82,12 +78,7 @@ impl Rsfx {
                     Some(scene) => {
                         current_scene.on_destroy();
                         current_scene = scene;
-
-                        let renderer = rsfx_context.get_renderer_mut();
-
-                        // TODO: Reset renderer if needed
-
-                        current_scene.on_start(renderer);
+                        current_scene.on_start(rsfx_context.get_renderer_mut());
                     }
                     _ => {
                         if game_status.should_quit() {

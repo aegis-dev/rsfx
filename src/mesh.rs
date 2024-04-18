@@ -49,7 +49,6 @@ impl Mesh {
         vbo_ids.push(Mesh::store_data_in_attribute_list(0, 3, vertices));
         vbo_ids.push(Mesh::store_data_in_attribute_list(1, 2, texture_coord));
 
-
         unsafe {
             gl::BindVertexArray(0);
         }

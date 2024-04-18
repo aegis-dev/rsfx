@@ -10,6 +10,7 @@ gl = "0.14.0"
 num-traits = "0.2.14"
 num-derive = "0.3.3"
 png = "0.16.8"
+glam = "0.27.0"
 
 [dependencies.sdl2]
 version = "0.36.0"

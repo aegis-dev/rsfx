@@ -20,24 +20,27 @@
 use std::ptr::null;
 
 use gl;
+use glam::{Mat4, Vec3, Vec4};
+use sdl2::video::GLContext;
 
-use crate::shaders::ShaderProgram;
+use crate::internal::shader_program::ShaderProgram;
 use crate::mesh::Mesh;
 use crate::texture::Texture;
 
 pub struct GlRenderer {
+    gl_context: GLContext,
     shader: ShaderProgram,
 }
 
 impl GlRenderer {
-    pub fn new(shader: ShaderProgram) -> GlRenderer {
+    pub fn new(gl_context: GLContext, shader: ShaderProgram) -> GlRenderer {
         unsafe {
             gl::Disable(gl::DEPTH_TEST);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
-        GlRenderer { shader }
+        GlRenderer { gl_context, shader }
     }
 
     pub fn clear_buffer(&self) {
@@ -63,8 +66,20 @@ impl GlRenderer {
     pub fn set_uniform_int(&self, location: i32, value: i32) {
         self.shader.set_uniform_int(location, value);
     }
+    
+    pub fn set_uniform_vec3(&self, location: i32, value: &Vec3) {
+        self.shader.set_uniform_vec3(location, value);
+    }
+    
+    pub fn set_uniform_vec4(&self, location: i32, value: &Vec4) {
+        self.shader.set_uniform_vec4(location, value);
+    }
 
-    pub fn render(&self, mesh: &Mesh, texture: &Texture, palette: &Texture) {
+    pub fn set_uniform_mat4(&self, location: i32, value: &Mat4) {
+        self.shader.set_uniform_mat4(location, value);
+    }
+
+    pub fn render(&self, mesh: &Mesh, texture: &Texture) {
         unsafe {
             gl::BindVertexArray(mesh.vao_id());
             gl::EnableVertexAttribArray(0);
@@ -72,9 +87,6 @@ impl GlRenderer {
 
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, texture.texture_id());
-
-            gl::ActiveTexture(gl::TEXTURE1);
-            gl::BindTexture(gl::TEXTURE_2D, palette.texture_id());
 
             gl::DrawElements(gl::TRIANGLES, mesh.indices_count(), gl::UNSIGNED_INT, null());
 
