@@ -21,6 +21,7 @@
 
 extern crate gl;
 extern crate sdl2;
+pub extern crate glam;
 
 mod internal;
 pub mod mesh;
@@ -29,6 +30,7 @@ pub mod game_status;
 pub mod scene;
 pub mod input;
 pub mod renderer;
+pub mod obj_loader;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;

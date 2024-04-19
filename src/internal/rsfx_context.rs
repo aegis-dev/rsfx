@@ -44,7 +44,11 @@ impl RsfxContext {
     pub fn new(game_name: &str) -> Result<RsfxContext, String> {
         let sdl = sdl2::init().unwrap();
         let video_subsystem = sdl.video().unwrap();
-
+        let gl_attr = video_subsystem.gl_attr();
+        
+        gl_attr.set_context_major_version(4);
+        gl_attr.set_context_minor_version(3);
+        
         // Hide mouse cursor
         sdl.mouse().show_cursor(false);
         sdl.mouse().set_relative_mouse_mode(true);
@@ -62,6 +66,7 @@ impl RsfxContext {
             .unwrap();
 
         let gl_context = window.gl_create_context().unwrap();
+        
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
         // disable vsync
@@ -81,7 +86,7 @@ impl RsfxContext {
         };
 
         let renderer = Renderer::new(GlRenderer::new(gl_context, shader));
-        renderer.set_clear_color(0.0, 0.0, 0.0, 0.0);
+        renderer.set_clear_color(0.0, 0.0, 0.0);
 
         let input = Input::new(
             display_width as i32,

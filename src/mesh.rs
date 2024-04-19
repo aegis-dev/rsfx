@@ -23,6 +23,8 @@ use std::ptr::null;
 
 use gl;
 
+use crate::internal::structs::vertex_data::{VertexData, self};
+
 pub struct Mesh {
     vao_id: gl::types::GLuint,
     vbo_ids: Vec<gl::types::GLuint>,
@@ -31,7 +33,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn from_data(vertices: &Vec<gl::types::GLfloat>, texture_coord: &Vec<gl::types::GLfloat>, indices: &Vec<gl::types::GLuint>) -> Mesh {
+    pub fn from_data(vertex_data: &Vec<VertexData>, indices: &Vec<u32>) -> Mesh {
         let vao_id = {
             let mut vao_ids = vec![0];
             unsafe {
@@ -46,14 +48,13 @@ impl Mesh {
 
         let mut vbo_ids: Vec<gl::types::GLuint> = vec![];
         vbo_ids.push(Mesh::bind_indices_buffer(indices));
-        vbo_ids.push(Mesh::store_data_in_attribute_list(0, 3, vertices));
-        vbo_ids.push(Mesh::store_data_in_attribute_list(1, 2, texture_coord));
+        vbo_ids.push(Mesh::store_vertex_data_in_attribute_list(vertex_data));
 
         unsafe {
             gl::BindVertexArray(0);
         }
 
-        let vertices_count = vertices.len() as gl::types::GLsizei;
+        let vertices_count = vertex_data.len() as gl::types::GLsizei;
         let indices_count = indices.len() as gl::types::GLsizei;
         Mesh { vao_id, vbo_ids, vertices_count, indices_count }
     }
@@ -91,6 +92,48 @@ impl Mesh {
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         }
 
+        vbo_id
+    }
+    
+    fn store_vertex_data_in_attribute_list(vertex_data: &Vec<VertexData>) -> gl::types::GLuint {
+        let vbo_id = {
+            let mut vbo_ids = vec![0];
+            unsafe {
+                gl::GenBuffers(vbo_ids.len() as gl::types::GLsizei, vbo_ids.as_mut_ptr());
+            }
+            vbo_ids[0]
+        };
+        
+        unsafe {
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbo_id);
+            gl::BufferData(gl::ARRAY_BUFFER, (vertex_data::VERTEX_DATA_SIZE as usize * vertex_data.len()) as isize, vertex_data.as_ptr() as *const c_void, gl::STATIC_DRAW);
+            gl::VertexAttribPointer(
+                vertex_data::VERTEX_POSITION_ATTRIBUTE_ID,
+                vertex_data::VERTEX_POSITION_ATTRIBUTE_SIZE_IN_FLOATS as i32,
+                gl::FLOAT,
+                gl::FALSE,
+                vertex_data::VERTEX_DATA_SIZE as i32,
+                vertex_data::VERTEX_DATA_POSITION_OFFSET as _
+            );
+            gl::VertexAttribPointer(
+                vertex_data::VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID,
+                vertex_data::VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_SIZE_IN_FLOATS as i32,
+                gl::FLOAT,
+                gl::FALSE,
+                vertex_data::VERTEX_DATA_SIZE as i32,
+                vertex_data::VERTEX_DATA_TEXTURE_COORDINATE_OFFSET as _
+            );
+            gl::VertexAttribPointer(
+                vertex_data::VERTEX_NORMAL_ATTRIBUTE_ID,
+                vertex_data::VERTEX_NORMAL_ATTRIBUTE_SIZE_IN_FLOATS as i32,
+                gl::FLOAT,
+                gl::FALSE,
+                vertex_data::VERTEX_DATA_SIZE as i32,
+                vertex_data::VERTEX_DATA_NORMAL_OFFSET as _
+            );
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+        }
+        
         vbo_id
     }
 

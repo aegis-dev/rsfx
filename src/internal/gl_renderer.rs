@@ -27,6 +27,8 @@ use crate::internal::shader_program::ShaderProgram;
 use crate::mesh::Mesh;
 use crate::texture::Texture;
 
+use super::structs::vertex_data;
+
 pub struct GlRenderer {
     gl_context: GLContext,
     shader: ShaderProgram,
@@ -35,7 +37,8 @@ pub struct GlRenderer {
 impl GlRenderer {
     pub fn new(gl_context: GLContext, shader: ShaderProgram) -> GlRenderer {
         unsafe {
-            gl::Disable(gl::DEPTH_TEST);
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LESS); 
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
@@ -45,7 +48,7 @@ impl GlRenderer {
 
     pub fn clear_buffer(&self) {
         unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
     }
 
@@ -57,9 +60,13 @@ impl GlRenderer {
         self.shader.disable();
     }
 
-    pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
+    pub fn set_clear_color(&self, r: f32, g: f32, b: f32) {
+        let real_r = (r % 255.0) / 255.0;
+        let real_g = (g % 255.0) / 255.0;
+        let real_b = (b % 255.0) / 255.0;
+        
         unsafe {
-            gl::ClearColor(r, g, b, a);
+            gl::ClearColor(real_r, real_g, real_b, 1.0);
         }
     }
 
@@ -82,16 +89,20 @@ impl GlRenderer {
     pub fn render(&self, mesh: &Mesh, texture: &Texture) {
         unsafe {
             gl::BindVertexArray(mesh.vao_id());
-            gl::EnableVertexAttribArray(0);
-            gl::EnableVertexAttribArray(1);
+            
+            for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
+                gl::EnableVertexAttribArray(*attribute_id);
+            }
 
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, texture.texture_id());
 
             gl::DrawElements(gl::TRIANGLES, mesh.indices_count(), gl::UNSIGNED_INT, null());
 
-            gl::DisableVertexAttribArray(0);
-            gl::DisableVertexAttribArray(1);
+            for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
+                gl::DisableVertexAttribArray(*attribute_id);
+            }
+            
             gl::BindVertexArray(0);
         }
     }

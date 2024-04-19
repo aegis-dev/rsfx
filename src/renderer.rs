@@ -38,8 +38,8 @@ impl Renderer {
         self.gl_renderer.clear_buffer();
     }
     
-    pub fn set_clear_color(&self, r: f32, g: f32, b: f32, a: f32) {
-        self.gl_renderer.set_clear_color(r, g, b, a);
+    pub fn set_clear_color(&self, r: f32, g: f32, b: f32) {
+        self.gl_renderer.set_clear_color(r, g, b);
     }
     
     pub fn set_transformation_matrix(&self, matrix: &Mat4) {

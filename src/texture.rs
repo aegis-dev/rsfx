@@ -18,8 +18,9 @@
 //
 
 use std::ffi::c_void;
-
 use gl;
+
+use crate::internal::byte_buffer_reader::ByteBufferReader;
 
 pub struct Texture {
     texture_id: gl::types::GLuint,
@@ -35,6 +36,42 @@ pub enum ImageMode {
 }
 
 impl Texture {
+    pub fn from_png_bytes(png_bytes: &[u8]) -> Result<Texture, String> {
+        let decoder = png::Decoder::new(ByteBufferReader::from(png_bytes));
+        let mut reader = match decoder.read_info() {
+            Ok(reader) => reader.1,
+            Err(error) => return Err(error.to_string())
+        };
+    
+        let mut raw_image_data = vec![0; reader.output_buffer_size()];
+        match reader.next_frame(&mut raw_image_data) {
+            Err(error) => return Err(error.to_string()),
+            _ => { }
+        };
+    
+        let info = reader.info();
+        let width = info.width as usize;
+        let height = info.height as usize;
+        let color_size = raw_image_data.len() / (width * height);
+        if color_size != 3 && color_size != 4 {
+            return Err(
+                String::from(format!("Unexpected image size or it is corrupted.\nwidth: {0} \
+                , height: {1}, byte_count: {2}", width, height, raw_image_data.len()))
+            );
+        }
+        let mode = match color_size {
+            3 => ImageMode::RGB,
+            4 => ImageMode::RGBA,
+            _ => {
+                return Err(
+                    String::from("Unsupported image color mode. Expected RGB or RGBA color mode.")
+                );
+            }
+        };
+        
+        Ok(Texture::from_data(&raw_image_data, width as u32, height as u32, mode))
+    }
+    
     pub fn from_data(data: &Vec<u8>, width: gl::types::GLuint, height: gl::types::GLuint, mode: ImageMode) -> Texture {
         let texture_id: gl::types::GLuint = {
             let mut texture_ids = vec![0];
