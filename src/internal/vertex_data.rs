@@ -19,9 +19,8 @@
 
 use std::mem;
 use gl::types::GLuint;
+use glam::{Vec3, Vec2};
 
-use super::vec2::Vec2;
-use super::vec3::Vec3;
 
 pub const VERTEX_POSITION_ATTRIBUTE_ID: GLuint = 0;
 pub const VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID: GLuint = 1;

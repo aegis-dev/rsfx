@@ -23,7 +23,7 @@ use std::ptr::null;
 
 use gl;
 
-use crate::internal::structs::vertex_data::{VertexData, self};
+use crate::internal::vertex_data::{VertexData, self};
 
 pub struct Mesh {
     vao_id: gl::types::GLuint,

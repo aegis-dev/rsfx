@@ -19,7 +19,9 @@
 
 use glam::Mat4;
 
-use crate::{internal::gl_renderer::GlRenderer, mesh::Mesh, texture::Texture};
+use crate::internal::gl_renderer::GlRenderer;
+use crate::mesh::Mesh;
+use crate::texture::Texture;
 
 const UNIFORM_TRANSFORMATION_MATRIX_LOCATION: i32 = 2;
 const UNIFORM_PROJECTION_MATRIX_LOCATION: i32 = 6;

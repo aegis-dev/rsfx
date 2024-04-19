@@ -22,12 +22,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use sdl2::Sdl;
 use sdl2::VideoSubsystem;
 use sdl2::video::Window;
+use sdl2::event::Event;
 
 use crate::internal::gl_renderer::GlRenderer;
 use crate::internal::shader_program::ShaderProgram;
 use crate::input::Input;
 use crate::renderer::Renderer;
-use sdl2::event::Event;
 
 pub struct RsfxContext {
     sdl: Sdl,

@@ -21,4 +21,4 @@ pub(crate) mod byte_buffer_reader;
 pub(crate) mod gl_renderer;
 pub(crate) mod rsfx_context;
 pub(crate) mod shader_program;
-pub(crate) mod structs;
+pub(crate) mod vertex_data;

@@ -18,8 +18,10 @@
 //
 
 use gl::types::GLuint;
+use glam::{Vec3, Vec2};
 
-use crate::{mesh::Mesh, internal::structs::{vertex_data::VertexData, vec3::Vec3, vec2::Vec2}};
+use crate::mesh::Mesh;
+use crate::internal::vertex_data::VertexData;
 
 pub fn load_obj_mesh(obj_data: &str) -> Mesh {
     let lines: Vec<_> = obj_data.lines().collect();

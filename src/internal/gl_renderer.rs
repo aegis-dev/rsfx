@@ -26,8 +26,7 @@ use sdl2::video::GLContext;
 use crate::internal::shader_program::ShaderProgram;
 use crate::mesh::Mesh;
 use crate::texture::Texture;
-
-use super::structs::vertex_data;
+use super::vertex_data;
 
 pub struct GlRenderer {
     gl_context: GLContext,
