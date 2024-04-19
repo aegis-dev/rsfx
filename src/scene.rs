@@ -25,6 +25,8 @@ pub trait Scene {
     fn on_start(&mut self, renderer: &mut Renderer);
 
     fn on_update(&mut self, game_status: &mut GameStatus, renderer: &mut Renderer, input: &Input, delta_time: f64) -> Option<Box<dyn Scene>>;
+    
+    fn on_render(&mut self, renderer: &mut Renderer);
 
     fn on_destroy(&mut self);
 }

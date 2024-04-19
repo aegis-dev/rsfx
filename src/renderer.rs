@@ -23,9 +23,9 @@ use crate::internal::gl_renderer::GlRenderer;
 use crate::mesh::Mesh;
 use crate::texture::Texture;
 
-const UNIFORM_TRANSFORMATION_MATRIX_LOCATION: i32 = 2;
-const UNIFORM_PROJECTION_MATRIX_LOCATION: i32 = 6;
-const UNIFORM_VIEW_MATRIX_LOCATION: i32 = 10;
+const UNIFORM_TRANSFORMATION_MATRIX_LOCATION: i32 = 3;
+const UNIFORM_PROJECTION_MATRIX_LOCATION: i32 = 7;
+const UNIFORM_VIEW_MATRIX_LOCATION: i32 = 11;
 
 pub struct Renderer {
     gl_renderer: GlRenderer,

@@ -47,7 +47,7 @@ impl RsfxContext {
         let gl_attr = video_subsystem.gl_attr();
         
         gl_attr.set_context_major_version(4);
-        gl_attr.set_context_minor_version(3);
+        gl_attr.set_context_minor_version(5);
         
         // Hide mouse cursor
         sdl.mouse().show_cursor(false);

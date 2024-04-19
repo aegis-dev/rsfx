@@ -31,6 +31,7 @@ pub mod scene;
 pub mod input;
 pub mod renderer;
 pub mod obj_loader;
+pub mod matrices;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
@@ -50,21 +51,25 @@ impl Rsfx {
         let mut rsfx_context = RsfxContext::new(game_name)?;
 
         let mut current_scene = starting_scene;
+        
+        rsfx_context.begin_rendering();
 
         current_scene.on_start(&mut rsfx_context.get_renderer_mut());
+        
+        rsfx_context.end_rendering();
 
         let delta_time = RsfxContext::time_now();
         let mut last_frame_time = delta_time;
 
         let mut game_status = GameStatus::new();
         'main_loop: loop {
+            rsfx_context.begin_rendering();
+            
             let input = rsfx_context.poll_input_events();
             if input.should_quit() {
                 break 'main_loop;
             }
             
-            rsfx_context.begin_rendering();
-
             let time_now = RsfxContext::time_now();
             if time_now >= last_frame_time + Rsfx::TICK_RATE {
                 let delta_time = time_now - last_frame_time;
@@ -89,6 +94,8 @@ impl Rsfx {
                     }
                 };
             }
+            
+            current_scene.on_render(rsfx_context.get_renderer_mut());
             
             rsfx_context.end_rendering();
             rsfx_context.swap_buffer();

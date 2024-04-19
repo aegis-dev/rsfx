@@ -17,19 +17,23 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#version 430 core
+#version 450 core
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texture_coords;
+layout(location = 2) in vec3 normal;
 
-layout(location = 2)  uniform mat4 transformation_matrix;
-layout(location = 6)  uniform mat4 projection_matrix;
-layout(location = 10) uniform mat4 view_matrix;
+layout(location = 3)  uniform mat4 transformation_matrix;
+layout(location = 7)  uniform mat4 projection_matrix;
+layout(location = 11) uniform mat4 view_matrix;
 
 out vec2 frag_texture_coords;
+out vec3 frag_normal;
 
 void main(void) {
 	vec4 world_position = transformation_matrix * vec4(position, 1.0);
 	gl_Position = projection_matrix * view_matrix * world_position;
+	
     frag_texture_coords = texture_coords;
+    frag_normal = (transformation_matrix * vec4(normal, 0.0)).xyz;
 }

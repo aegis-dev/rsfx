@@ -17,9 +17,10 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#version 430 core
+#version 450 core
 
 in vec2 frag_texture_coords;
+in vec3 frag_normal;
 
 out vec4 color;
 
