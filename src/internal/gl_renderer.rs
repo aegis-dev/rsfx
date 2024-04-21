@@ -180,7 +180,7 @@ impl GlRenderer {
         let height = self.framebuffer.get_height();
         
         if matches!(self.window_aspect_ratio, AspectRatio::R16by9) {
-            self.set_viewposrt_size(0, 0, width, height);
+            self.set_viewposrt_size(0, 0, self.window_width, self.window_height);
         } else if matches!(self.window_aspect_ratio, AspectRatio::WiderThan16by9) {
             let min_height = cmp::min(self.window_height, height);
             let max_height = cmp::max(self.window_height, height);
