@@ -18,14 +18,14 @@
 //
 
 use std::ffi::c_void;
-use gl;
+use gl::{self, types::{GLuint, GLint}};
 
 use crate::internal::byte_buffer_reader::ByteBufferReader;
 
 pub struct Texture {
-    texture_id: gl::types::GLuint,
-    width: gl::types::GLuint,
-    height: gl::types::GLuint,
+    texture_id: GLuint,
+    width: GLuint,
+    height: GLuint,
 }
 
 #[derive(Clone, Copy)]
@@ -36,6 +36,10 @@ pub enum ImageMode {
 }
 
 impl Texture {
+    pub fn new(texture_id: GLuint, width: GLuint, height: GLuint) -> Texture {
+        Texture { texture_id, width, height }
+    }
+    
     pub fn from_png_bytes(png_bytes: &[u8]) -> Result<Texture, String> {
         let decoder = png::Decoder::new(ByteBufferReader::from(png_bytes));
         let mut reader = match decoder.read_info() {
@@ -73,7 +77,7 @@ impl Texture {
     }
     
     pub fn from_data(data: &Vec<u8>, width: gl::types::GLuint, height: gl::types::GLuint, mode: ImageMode) -> Texture {
-        let texture_id: gl::types::GLuint = {
+        let texture_id = {
             let mut texture_ids = vec![0];
             unsafe {
                 gl::GenTextures(texture_ids.len() as gl::types::GLsizei, texture_ids.as_mut_ptr());
@@ -83,10 +87,10 @@ impl Texture {
 
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, texture_id);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as gl::types::GLint);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as gl::types::GLint);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as gl::types::GLint);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as gl::types::GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as GLint);
 
             let internal_format = match mode {
                 //ImageMode::RED => { 1 }
@@ -121,7 +125,7 @@ impl Texture {
         self.height
     }
 
-    pub fn update_texture_data(&self, data: &Vec<u8>, mode: ImageMode) {
+    fn update_texture_data(&self, data: &Vec<u8>, mode: ImageMode) {
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
 

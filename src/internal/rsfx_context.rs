@@ -45,36 +45,32 @@ impl RsfxContext {
         let sdl = sdl2::init().unwrap();
         let video_subsystem = sdl.video().unwrap();
         let gl_attr = video_subsystem.gl_attr();
-        
+
         gl_attr.set_context_major_version(4);
         gl_attr.set_context_minor_version(5);
-        
+
         // Hide mouse cursor
         sdl.mouse().show_cursor(false);
         sdl.mouse().set_relative_mouse_mode(true);
 
         // Get primary display bounds
         let current_display = video_subsystem.display_bounds(0)?;
-        let display_width = current_display.width();
-        let display_height = current_display.height();
+        let display_width = current_display.width() as i32;
+        let display_height = current_display.height() as i32;
 
         let window = video_subsystem
-            .window(game_name, display_width, display_height)
+            .window(game_name, display_width as u32, display_height as u32)
             .opengl()
             .borderless()
             .build()
             .unwrap();
 
         let gl_context = window.gl_create_context().unwrap();
-        
+
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
         // disable vsync
         video_subsystem.gl_set_swap_interval(0).unwrap();
-
-        unsafe {
-            gl::Viewport(0,0, display_width as i32, display_height as i32);
-        }
 
         // Load shaders
         let shader = {
@@ -84,15 +80,17 @@ impl RsfxContext {
                 &CString::new(include_str!("shaders/screen_shader.frag")).unwrap(),
             )
         };
+        
+        let gl_renderer = GlRenderer::new(gl_context, shader, 854, 480, display_width, display_height);
 
-        let renderer = Renderer::new(GlRenderer::new(gl_context, shader));
+        let renderer = Renderer::new(gl_renderer);
         renderer.set_clear_color(0.0, 0.0, 0.0);
 
         let input = Input::new(
-            display_width as i32,
-            display_height as i32,
-            display_width as i32,
-            display_height as i32
+            display_width,
+            display_height,
+            display_width,
+            display_height
         );
 
         Ok(RsfxContext {
@@ -129,8 +127,8 @@ impl RsfxContext {
         self.renderer.begin_rendering();
     }
     
-    pub fn end_rendering(&self) {
-        self.renderer.end_rendering();
+    pub fn render_framebuffer(&self) {
+        self.renderer.render_framebuffer();
     }
     
     pub fn swap_buffer(&self) { 

@@ -56,8 +56,6 @@ impl Rsfx {
 
         current_scene.on_start(&mut rsfx_context.get_renderer_mut());
         
-        rsfx_context.end_rendering();
-
         let delta_time = RsfxContext::time_now();
         let mut last_frame_time = delta_time;
 
@@ -97,7 +95,7 @@ impl Rsfx {
             
             current_scene.on_render(rsfx_context.get_renderer_mut());
             
-            rsfx_context.end_rendering();
+            rsfx_context.render_framebuffer();
             rsfx_context.swap_buffer();
         }
 

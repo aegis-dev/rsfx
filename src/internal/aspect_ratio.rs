@@ -17,10 +17,29 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-pub(crate) mod byte_buffer_reader;
-pub(crate) mod gl_renderer;
-pub(crate) mod rsfx_context;
-pub(crate) mod shader_program;
-pub(crate) mod vertex_data;
-pub(crate) mod framebuffer;
-pub(crate) mod aspect_ratio;
+pub enum AspectRatio {
+    R16by9,
+    WiderThan16by9,
+    NarrowerThan16by9,
+}
+
+impl AspectRatio {
+    pub fn from(width: i32, height: i32) -> AspectRatio {
+        let ratio = width as f32 / height as f32;
+        
+        if ratio >= 1.77 && ratio <= 1.78 {
+            // For instance, 1920x1080 ~ 1.777777778
+            return AspectRatio::R16by9;
+        } if ratio > 1.78 {
+            // For instance, 19:10 4096x2160 ~ 1.896296296
+            return AspectRatio::WiderThan16by9;
+        } else {
+            // For instance, 4:3 800x600 ~ 1.333333333
+            return AspectRatio::NarrowerThan16by9;
+        }
+    }
+    
+    pub fn is_wider_than(&self, other: &AspectRatio) {
+        
+    }
+}

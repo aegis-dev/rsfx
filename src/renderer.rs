@@ -64,7 +64,7 @@ impl Renderer {
         self.gl_renderer.begin_rendering();
     }
 
-    pub(crate) fn end_rendering(&self) {
-        self.gl_renderer.end_rendering();
+    pub(crate) fn render_framebuffer(&self) {
+        self.gl_renderer.render_framebuffer();
     }
 }

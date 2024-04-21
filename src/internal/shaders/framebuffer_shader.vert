@@ -17,10 +17,15 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-pub(crate) mod byte_buffer_reader;
-pub(crate) mod gl_renderer;
-pub(crate) mod rsfx_context;
-pub(crate) mod shader_program;
-pub(crate) mod vertex_data;
-pub(crate) mod framebuffer;
-pub(crate) mod aspect_ratio;
+#version 450 core
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texture_coords;
+layout(location = 2) in vec3 normal;
+
+out vec2 frag_texture_coords;
+
+void main(void) {
+    gl_Position = vec4(position.x, position.y, 0.0, 1.0);
+    frag_texture_coords = texture_coords;
+}

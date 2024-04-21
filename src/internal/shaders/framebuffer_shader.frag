@@ -17,10 +17,14 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-pub(crate) mod byte_buffer_reader;
-pub(crate) mod gl_renderer;
-pub(crate) mod rsfx_context;
-pub(crate) mod shader_program;
-pub(crate) mod vertex_data;
-pub(crate) mod framebuffer;
-pub(crate) mod aspect_ratio;
+#version 450 core
+
+in vec2 frag_texture_coords;
+
+out vec4 color;
+
+layout(binding = 0) uniform sampler2D texture_sampler;
+
+void main(void) {
+    color = texture2D(texture_sampler, frag_texture_coords);
+}
