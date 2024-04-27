@@ -65,6 +65,12 @@ impl ShaderProgram {
         }
     }
     
+    pub fn set_uniform_float(&self, location: i32, value: f32) {
+        unsafe {
+            gl::Uniform1f(location, value);
+        }
+    }
+    
     pub fn set_uniform_vec3(&self, location: i32, value: &Vec3) {
         unsafe {
             gl::Uniform3f(location, value[0], value[1], value[2]);

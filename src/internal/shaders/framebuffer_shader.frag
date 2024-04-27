@@ -21,10 +21,15 @@
 
 in vec2 frag_texture_coords;
 in vec3 frag_normal;
+in float frag_fog_density;
 
 out vec4 color;
 
 layout(binding = 0) uniform sampler2D texture_sampler;
+
+layout(location = 17) uniform vec3 directional_light_color;
+layout(location = 18) uniform vec3 directional_light_direction;
+layout(location = 19) uniform float directional_light_brightness;
 
 // https://en.wikipedia.org/wiki/Ordered_dithering
 const int threshold_map[8][8] = {
@@ -52,17 +57,23 @@ float luma(vec3 color) {
 }
 
 void main(void) {
-    vec4 sampled_color = texture2D(texture_sampler, frag_texture_coords);
-    
-    vec2 xy = gl_FragCoord.xy * dither_scale;
-    int x = int(mod(xy.x, 8));
-    int y = int(mod(xy.y, 8));
-    
-    //vec3 dithered_color = floor(sampled_color.rgb * number_of_colors + 0.5) / number_of_colors;
-    
-    float threshold = get_threshold(x, y, luma(sampled_color.rgb));
-    vec3 dithered_color = sampled_color.rgb * threshold;
+//    vec4 sampled_color = texture2D(texture_sampler, frag_texture_coords);
+//    
+//    vec2 xy = gl_FragCoord.xy * dither_scale;
+//    int x = int(mod(xy.x, 8));
+//    int y = int(mod(xy.y, 8));
+//    
+//    //vec3 dithered_color = floor(sampled_color.rgb * number_of_colors + 0.5) / number_of_colors;
+//    
+//    float threshold = get_threshold(x, y, luma(sampled_color.rgb));
+//    vec3 dithered_color = sampled_color.rgb * threshold;
+//
+//    color = vec4(dithered_color, sampled_color.a);
 
-    color = vec4(dithered_color, sampled_color.a);
-   // color = texture2D(texture_sampler, frag_texture_coords);
+    vec3 unit_normal = normalize(frag_normal);
+    float normal_light_dot_product = dot(unit_normal, directional_light_direction);
+    float brightness = max(normal_light_dot_product, directional_light_brightness);
+    vec3 diffuse = vec3(brightness * directional_light_color);
+
+    color = vec4(diffuse, 1.0) * texture2D(texture_sampler, frag_texture_coords) * frag_fog_density;
 }

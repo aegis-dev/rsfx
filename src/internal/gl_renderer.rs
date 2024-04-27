@@ -136,6 +136,10 @@ impl GlRenderer {
         self.framebuffer_shader.set_uniform_int(location, value);
     }
     
+    pub fn set_uniform_float(&self, location: i32, value: f32) {
+        self.framebuffer_shader.set_uniform_float(location, value);
+    }
+    
     pub fn set_uniform_vec3(&self, location: i32, value: &Vec3) {
         self.framebuffer_shader.set_uniform_vec3(location, value);
     }

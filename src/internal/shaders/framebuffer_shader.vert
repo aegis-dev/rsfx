@@ -27,13 +27,12 @@ layout(location = 3)  uniform mat4 transformation_matrix;
 layout(location = 7)  uniform mat4 projection_matrix;
 layout(location = 11) uniform mat4 view_matrix;
 
+layout(location = 15) uniform float fog_min;
+layout(location = 16) uniform float fog_max;
+
 out vec2 frag_texture_coords;
 out vec3 frag_normal;
-
-float snap(float value, float amount) {
-    float modulus = mod(value, amount);
-    return value - modulus;
-}
+out float frag_fog_density;
 
 vec2 resolution = vec2(854.0, 480.0);
 
@@ -63,10 +62,9 @@ vec4 to_low_precision(vec4 position, vec2 resolution) {
 void main(void) {
 	vec4 world_position = transformation_matrix * vec4(position, 1.0);
 	vec4 world_view = view_matrix * world_position;
-	
-	//world_view = vec4(snap(world_view.x, 0.05), snap(world_view.y, 0.05), snap(world_view.z, 0.05), snap(world_view.w, 0.05));
-
 	vec4 projection_world_view = projection_matrix * world_view;
+	
+    float depth = abs(world_view.z / world_view.w);
 	
 	projection_world_view = to_low_precision(projection_world_view, resolution);
     
@@ -74,4 +72,6 @@ void main(void) {
 	
     frag_texture_coords = texture_coords;
     frag_normal = (transformation_matrix * vec4(normal, 0.0)).xyz;
+    
+    frag_fog_density = 1.0 - clamp((fog_max - depth) / (fog_min - fog_max), 0.0, 1.0);
 }
