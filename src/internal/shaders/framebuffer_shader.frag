@@ -26,6 +26,43 @@ out vec4 color;
 
 layout(binding = 0) uniform sampler2D texture_sampler;
 
+// https://en.wikipedia.org/wiki/Ordered_dithering
+const int threshold_map[8][8] = {
+    { 0, 32,  8, 40,  2, 34, 10, 42},
+    {48, 16, 56, 24, 50, 18, 58, 26}, 
+    {12, 44,  4, 36, 14, 46,  6, 38}, 
+    {60, 28, 52, 20, 62, 30, 54, 22}, 
+    { 3, 35, 11, 43,  1, 33,  9, 41}, 
+    {51, 19, 59, 27, 49, 17, 57, 25},
+    {15, 47,  7, 39, 13, 45,  5, 37},
+    {63, 31, 55, 23, 61, 29, 53, 21}
+};
+
+float number_of_colors = 255.0;
+float dither_scale = 1.0;
+
+float get_threshold(int x, int y, float brightness) {
+    float limit = (threshold_map[x][y] + 1.0) / 64.0;
+    
+    return brightness < limit ? 0.0 : 1.0; 
+}
+
+float luma(vec3 color) {
+    return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
 void main(void) {
-    color = texture2D(texture_sampler, frag_texture_coords);
+    vec4 sampled_color = texture2D(texture_sampler, frag_texture_coords);
+    
+    vec2 xy = gl_FragCoord.xy * dither_scale;
+    int x = int(mod(xy.x, 8));
+    int y = int(mod(xy.y, 8));
+    
+    //vec3 dithered_color = floor(sampled_color.rgb * number_of_colors + 0.5) / number_of_colors;
+    
+    float threshold = get_threshold(x, y, luma(sampled_color.rgb));
+    vec3 dithered_color = sampled_color.rgb * threshold;
+
+    color = vec4(dithered_color, sampled_color.a);
+   // color = texture2D(texture_sampler, frag_texture_coords);
 }
