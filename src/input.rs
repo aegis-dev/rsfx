@@ -17,6 +17,7 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
+use core::f32;
 use std::collections::HashMap;
 
 use sdl2::keyboard::Keycode;
@@ -28,8 +29,14 @@ use num_traits::FromPrimitive;
 
 #[derive(Clone)]
 pub struct Input {
+    screen_width: i32,
+    screen_height: i32,
     cursor_x: f32,
     cursor_y: f32,
+    cursor_delta_x: f32,
+    cursor_delta_y: f32,
+    last_cursor_abs_x: f32,
+    last_cursor_abs_y: f32,
     max_cursor_x: f32,
     max_cursor_y: f32,
     min_cursor_x: f32,
@@ -303,8 +310,14 @@ pub enum Key {
 impl Input {
     pub fn new(screen_buffer_width: i32, screen_buffer_height: i32, screen_width: i32, screen_height: i32) -> Input {
         Input {
+            screen_width,
+            screen_height,
             cursor_x: 0.0,
             cursor_y: 0.0,
+            cursor_delta_x: 0.0,
+            cursor_delta_y: 0.0,
+            last_cursor_abs_x: 0.0,
+            last_cursor_abs_y: 0.0,
             max_cursor_x: (screen_buffer_width / 2) as f32,
             max_cursor_y: (screen_buffer_height / 2) as f32,
             min_cursor_x: (-screen_buffer_width / 2) as f32,
@@ -318,7 +331,7 @@ impl Input {
     }
 
     #[allow(unused_variables)]
-    pub fn process_sdl_event(&mut self, event:& Event) -> Result<(), String> {
+    pub(crate) fn process_sdl_event(&mut self, event:& Event) -> Result<(), String> {
         match event {
             Event::KeyDown {
                 timestamp,
@@ -351,20 +364,24 @@ impl Input {
                 yrel,
             } => {
                 let adjusted_x_rel = *xrel as f32 * self.cursor_x_sensitivity;
-                let adjusted_y_rel = *yrel as f32 * self.cursor_y_sensitivity;
-
+                // Invert y value
+                let adjusted_y_rel = -(*yrel as f32) * self.cursor_y_sensitivity;
+                
                 self.cursor_x += adjusted_x_rel;
                 if self.cursor_x > self.max_cursor_x {
                     self.cursor_x = self.max_cursor_x;
                 } else if self.cursor_x < self.min_cursor_x {
                     self.cursor_x = self.min_cursor_x ;
                 }
-                self.cursor_y -= adjusted_y_rel; // subtract to invert y value
+                self.cursor_y += adjusted_y_rel;
                 if self.cursor_y > self.max_cursor_y {
                     self.cursor_y = self.max_cursor_y;
                 } else if self.cursor_y < self.min_cursor_y {
                     self.cursor_y = self.min_cursor_y;
                 }
+                
+                self.cursor_delta_x = *xrel as f32;
+                self.cursor_delta_y = -(*yrel as f32);
             }
             Event::MouseButtonDown {
                 timestamp,
@@ -399,6 +416,11 @@ impl Input {
 
         Ok(())
     }
+    
+    pub(crate) fn clear_states(&mut self) {
+        self.cursor_delta_x = 0.0;
+        self.cursor_delta_y = 0.0;
+    }
 
     pub fn get_key_state(&self, key: Key) -> State {
         match self.key_state.get(&key) {
@@ -416,6 +438,10 @@ impl Input {
 
     pub fn get_cursor_position(&self) -> (i64, i64)  {
         (self.cursor_x as i64, self.cursor_y as i64)
+    }
+    
+    pub fn get_cursor_movement_delta(&self) -> (f32, f32)  {
+        (self.cursor_delta_x, self.cursor_delta_y)
     }
 
     pub fn should_quit(&self) -> bool {

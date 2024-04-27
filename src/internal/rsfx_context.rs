@@ -76,19 +76,22 @@ impl RsfxContext {
         let shader = {
             use std::ffi::CString;
             ShaderProgram::load_shaders(
-                &CString::new(include_str!("shaders/screen_shader.vert")).unwrap(),
-                &CString::new(include_str!("shaders/screen_shader.frag")).unwrap(),
+                &CString::new(include_str!("shaders/framebuffer_shader.vert")).unwrap(),
+                &CString::new(include_str!("shaders/framebuffer_shader.frag")).unwrap(),
             )
         };
         
-        let gl_renderer = GlRenderer::new(gl_context, shader, 854, 480, display_width, display_height);
+        let framebuffer_width = 854;
+        let framebuffer_height = 480;
+        
+        let gl_renderer = GlRenderer::new(gl_context, shader, framebuffer_width, framebuffer_height, display_width, display_height);
 
         let renderer = Renderer::new(gl_renderer);
         renderer.set_clear_color(0.0, 0.0, 0.0);
 
         let input = Input::new(
-            display_width,
-            display_height,
+            framebuffer_width,
+            framebuffer_height,
             display_width,
             display_height
         );
@@ -102,7 +105,7 @@ impl RsfxContext {
         })
     }
 
-    pub fn poll_input_events(&mut self) -> Input {
+    pub fn poll_input_events(&mut self) {
         let mut event_pump = self.sdl.event_pump().unwrap();
         for event in event_pump.poll_iter() {
             match self.input.process_sdl_event(&event) {
@@ -110,8 +113,14 @@ impl RsfxContext {
                 Ok(_) => {}
             };
         }
-
-        self.input.clone()
+    }
+    
+    pub fn get_input(&self) -> &Input {
+        &self.input
+    }
+    
+    pub fn clear_input_states(&mut self) {
+        self.input.clear_states();
     }
 
     pub fn poll_sdl_input_event(&mut self) -> Option<Event> {
@@ -119,8 +128,8 @@ impl RsfxContext {
         event_pump.poll_event()
     }
 
-    pub fn get_renderer_mut(&mut self) -> &mut Renderer {
-        &mut self.renderer
+    pub fn get_renderer(&self) -> &Renderer {
+        &self.renderer
     }
     
     pub fn begin_rendering(&self) {

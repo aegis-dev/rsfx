@@ -17,15 +17,11 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#version 450 core
+use glam::Vec3;
 
-in vec2 frag_texture_coords;
-in vec3 frag_normal;
-
-out vec4 color;
-
-layout(binding = 0) uniform sampler2D texture_sampler;
-
-void main(void) {
-    color = texture2D(texture_sampler, frag_texture_coords);
+pub fn get_direction_from_euler(rotation: &Vec3) -> Vec3 {
+        let x = rotation.x.to_radians().cos() * rotation.y.to_radians().cos();
+        let y = rotation.x.to_radians().sin();
+        let z = rotation.x.to_radians().cos() * rotation.y.to_radians().sin();
+        Vec3::new(x, y, z)
 }

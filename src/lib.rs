@@ -32,6 +32,7 @@ pub mod input;
 pub mod renderer;
 pub mod obj_loader;
 pub mod matrices;
+pub mod math;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
@@ -54,19 +55,23 @@ impl Rsfx {
         
         rsfx_context.begin_rendering();
 
-        current_scene.on_start(&mut rsfx_context.get_renderer_mut());
+        current_scene.on_start(&mut rsfx_context.get_renderer());
         
         let delta_time = RsfxContext::time_now();
         let mut last_frame_time = delta_time;
 
         let mut game_status = GameStatus::new();
         'main_loop: loop {
-            rsfx_context.begin_rendering();
+            rsfx_context.poll_input_events();
             
-            let input = rsfx_context.poll_input_events();
-            if input.should_quit() {
-                break 'main_loop;
+            {
+                let input = rsfx_context.get_input();
+                if input.should_quit() {
+                    break 'main_loop;
+                }
             }
+      
+            rsfx_context.begin_rendering();
             
             let time_now = RsfxContext::time_now();
             if time_now >= last_frame_time + Rsfx::TICK_RATE {
@@ -76,14 +81,14 @@ impl Rsfx {
                 // Update scene
                 match current_scene.on_update(
                     &mut game_status,
-                    rsfx_context.get_renderer_mut(),
-                    &input,
+                    rsfx_context.get_renderer(),
+                    rsfx_context.get_input(),
                     delta_time as f64 / 1000.0
                 ) {
                     Some(scene) => {
                         current_scene.on_destroy();
                         current_scene = scene;
-                        current_scene.on_start(rsfx_context.get_renderer_mut());
+                        current_scene.on_start(rsfx_context.get_renderer());
                     }
                     _ => {
                         if game_status.should_quit() {
@@ -91,9 +96,11 @@ impl Rsfx {
                         }
                     }
                 };
+                
+                rsfx_context.clear_input_states();
             }
             
-            current_scene.on_render(rsfx_context.get_renderer_mut());
+            current_scene.on_render(rsfx_context.get_renderer());
             
             rsfx_context.render_framebuffer();
             rsfx_context.swap_buffer();

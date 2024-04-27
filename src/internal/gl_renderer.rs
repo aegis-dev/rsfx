@@ -28,23 +28,23 @@ use sdl2::video::GLContext;
 use crate::internal::shader_program::ShaderProgram;
 use crate::mesh::Mesh;
 use crate::texture::Texture;
-use super::aspect_ratio::{AspectRatio, self};
+use super::aspect_ratio::AspectRatio;
 use super::framebuffer::Framebuffer;
 use super::vertex_data::{self, VertexData};
 
 pub struct GlRenderer {
     gl_context: GLContext,
-    shader: ShaderProgram,
+    framebuffer_shader: ShaderProgram,
     framebuffer: Framebuffer,
-    frambuffer_shader: ShaderProgram,
     framebuffer_quad: Mesh,
+    screen_shader: ShaderProgram,
     window_width: i32,
     window_height: i32,
     window_aspect_ratio: AspectRatio,
 }
 
 impl GlRenderer {
-    pub fn new(gl_context: GLContext, shader: ShaderProgram, framebuffer_width: i32, framebuffer_height: i32, window_width: i32, window_height: i32) -> GlRenderer {
+    pub fn new(gl_context: GLContext, framebuffer_shader: ShaderProgram, framebuffer_width: i32, framebuffer_height: i32, window_width: i32, window_height: i32) -> GlRenderer {
         unsafe {
     
             gl::Enable(gl::BLEND);
@@ -52,10 +52,10 @@ impl GlRenderer {
         }
         
         let framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
-        let frambuffer_shader = {
+        let screen_shader = {
             ShaderProgram::load_shaders(
-                &CString::new(include_str!("shaders/framebuffer_shader.vert")).unwrap(),
-                &CString::new(include_str!("shaders/framebuffer_shader.frag")).unwrap(),
+                &CString::new(include_str!("shaders/screen_shader.vert")).unwrap(),
+                &CString::new(include_str!("shaders/screen_shader.frag")).unwrap(),
             )
         };
         
@@ -73,16 +73,16 @@ impl GlRenderer {
         let window_aspect_ratio = AspectRatio::from(window_width, window_height);
         let frambuffer_aspect_ratio = AspectRatio::from(framebuffer_width, framebuffer_height);
         
-        if !matches!(frambuffer_aspect_ratio, AspectRatio::R16by9) {
+        if frambuffer_aspect_ratio != AspectRatio::R16by9 {
             panic!("Unexpected framebuffer aspect ratio! Expecting framebuffer resolution to be 16:9");
         }
 
         GlRenderer {
             gl_context,
-            shader,
+            framebuffer_shader,
             framebuffer,
-            frambuffer_shader,
             framebuffer_quad,
+            screen_shader,
             window_width,
             window_height,
             window_aspect_ratio
@@ -109,14 +109,14 @@ impl GlRenderer {
 
     pub fn begin_rendering(&self) {
         self.framebuffer.bind();
-        self.shader.enable();
+        self.framebuffer_shader.enable();
         self.enable_depth_test();
         self.set_viewposrt_size(0, 0, self.framebuffer.get_width(), self.framebuffer.get_height());
     }
     
     pub fn render_framebuffer(&self) {
         self.framebuffer.unbind();
-        self.frambuffer_shader.enable();
+        self.screen_shader.enable();
         self.disable_depth_test();
         self.set_framebuffer_viewport_for_window();
         self.render(&self.framebuffer_quad, self.framebuffer.get_texture());
@@ -133,19 +133,19 @@ impl GlRenderer {
     }
 
     pub fn set_uniform_int(&self, location: i32, value: i32) {
-        self.shader.set_uniform_int(location, value);
+        self.framebuffer_shader.set_uniform_int(location, value);
     }
     
     pub fn set_uniform_vec3(&self, location: i32, value: &Vec3) {
-        self.shader.set_uniform_vec3(location, value);
+        self.framebuffer_shader.set_uniform_vec3(location, value);
     }
     
     pub fn set_uniform_vec4(&self, location: i32, value: &Vec4) {
-        self.shader.set_uniform_vec4(location, value);
+        self.framebuffer_shader.set_uniform_vec4(location, value);
     }
 
     pub fn set_uniform_mat4(&self, location: i32, value: &Mat4) {
-        self.shader.set_uniform_mat4(location, value);
+        self.framebuffer_shader.set_uniform_mat4(location, value);
     }
 
     pub fn render(&self, mesh: &Mesh, texture: &Texture) {
@@ -179,9 +179,9 @@ impl GlRenderer {
         let width = self.framebuffer.get_width();
         let height = self.framebuffer.get_height();
         
-        if matches!(self.window_aspect_ratio, AspectRatio::R16by9) {
+        if self.window_aspect_ratio == AspectRatio::R16by9 {
             self.set_viewposrt_size(0, 0, self.window_width, self.window_height);
-        } else if matches!(self.window_aspect_ratio, AspectRatio::WiderThan16by9) {
+        } else if self.window_aspect_ratio == AspectRatio::WiderThan16by9 {
             let min_height = cmp::min(self.window_height, height);
             let max_height = cmp::max(self.window_height, height);
             

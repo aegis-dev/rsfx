@@ -17,6 +17,8 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+#[repr(u8)]
 pub enum AspectRatio {
     R16by9,
     WiderThan16by9,
@@ -37,9 +39,5 @@ impl AspectRatio {
             // For instance, 4:3 800x600 ~ 1.333333333
             return AspectRatio::NarrowerThan16by9;
         }
-    }
-    
-    pub fn is_wider_than(&self, other: &AspectRatio) {
-        
     }
 }
