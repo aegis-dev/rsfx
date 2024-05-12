@@ -25,14 +25,6 @@ use crate::internal::renderer_command::RendererCommand;
 use crate::mesh::Mesh;
 use crate::texture::Texture;
 
-const UNIFORM_TRANSFORMATION_MATRIX_LOCATION: i32 = 3;
-const UNIFORM_PROJECTION_MATRIX_LOCATION: i32 = 7;
-const UNIFORM_VIEW_MATRIX_LOCATION: i32 = 11;
-const UNIFORM_FOG_MIN_LOCATION: i32 = 15;
-const UNIFORM_FOG_MAX_LOCATION: i32 = 16;
-const UNIFORM_DIRECTIONAL_LIGT_COLOR_LOCATION: i32 = 17;
-const UNIFORM_DIRECTIONAL_LIGT_DIRECTION_LOCATION: i32 = 18;
-const UNIFORM_DIRECTIONAL_LIGT_BRIGHTNESS_LOCATION: i32 = 19;
 
 pub struct Renderer {
     gl_renderer: GlRenderer,
@@ -51,16 +43,16 @@ impl Renderer {
         self.commands.push(RendererCommand::SetClearColor(r, g, b));
     }
     
-    pub fn set_transformation_matrix(&mut self, matrix: &Mat4) {
-        self.commands.push(RendererCommand::SetUniformMat4(UNIFORM_TRANSFORMATION_MATRIX_LOCATION, matrix.clone()));
+    pub fn set_transform(&mut self, translation: &Vec3, rotation: &Vec3, scale: f32) {
+        self.commands.push(RendererCommand::SetTransformMat(translation.clone(), rotation.clone(), scale));
     }
     
-    pub fn set_projection_matrix(&mut self, matrix: &Mat4) {
-        self.commands.push(RendererCommand::SetUniformMat4(UNIFORM_PROJECTION_MATRIX_LOCATION, matrix.clone()));
+    pub fn set_perspective_projection(&mut self, fov: f32, aspect_ratio: f32) {
+        self.commands.push(RendererCommand::SetPerspectiveProjectionMat(fov, aspect_ratio));
     }
     
-    pub fn set_view_matrix(&mut self, matrix: &Mat4) {
-        self.commands.push(RendererCommand::SetUniformMat4(UNIFORM_VIEW_MATRIX_LOCATION, matrix.clone()));
+    pub fn set_view(&mut self, translation: &Vec3, rotation: &Vec3) {
+        self.commands.push(RendererCommand::SetViewMat(translation.clone(), rotation.clone()));
     }
     
     pub fn set_fog_minimum_distance(&mut self, distance: f32) {
@@ -68,7 +60,7 @@ impl Renderer {
         if value < 0.0 {
             value = 0.0;
         }
-        self.commands.push(RendererCommand::SetUniformFloat(UNIFORM_FOG_MIN_LOCATION, value));
+        self.commands.push(RendererCommand::SetFogMin(value));
     }
     
     pub fn set_fog_maximum_distance(&mut self, distance: f32) {
@@ -76,20 +68,20 @@ impl Renderer {
         if value < 0.0 {
             value = 0.0;
         }
-        self.commands.push(RendererCommand::SetUniformFloat(UNIFORM_FOG_MAX_LOCATION, value));
+        self.commands.push(RendererCommand::SetFogMax(value));
     }
     
-    pub fn set_direction_light_color(&mut self, color: &Vec3) {
-        self.commands.push(RendererCommand::SetUniformVec3(UNIFORM_DIRECTIONAL_LIGT_COLOR_LOCATION, color.clone()));
+    pub fn set_light_color(&mut self, color: &Vec3) {
+        self.commands.push(RendererCommand::SetLightColor(color.clone()));
     }
     
-    pub fn set_direction_light_direction(&mut self, direction: &Vec3) {
-        self.commands.push(RendererCommand::SetUniformVec3(UNIFORM_DIRECTIONAL_LIGT_DIRECTION_LOCATION, direction.clone()));
+    pub fn set_light_direction(&mut self, direction: &Vec3) {
+        self.commands.push(RendererCommand::SetLightDirection(direction.clone()));
     }
     
-    pub fn set_direction_light_brightness(&mut self, brightness: f32) {
+    pub fn set_light_brightness(&mut self, brightness: f32) {
         let value = brightness.clamp(0.0, 1.0);
-        self.commands.push(RendererCommand::SetUniformFloat(UNIFORM_DIRECTIONAL_LIGT_BRIGHTNESS_LOCATION, value));
+        self.commands.push(RendererCommand::SetLightBrightness(value));
     }
 
     pub fn render(&mut self, mesh: &Mesh, texture: &Texture) {

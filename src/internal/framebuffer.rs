@@ -32,7 +32,7 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-    pub fn new(width: i32, height: i32) -> Framebuffer {
+    pub fn new_color_buffer(width: i32, height: i32) -> Framebuffer {
         unsafe {
             let framebuffer_object = {
                 let mut fbos = vec![0];
@@ -82,6 +82,50 @@ impl Framebuffer {
             }
         }
     }
+
+    pub fn new_depth_buffer(width: i32, height: i32) -> Framebuffer {
+        unsafe {
+            let framebuffer_object = {
+                let mut fbos = vec![0];
+                gl::GenFramebuffers(fbos.len() as gl::types::GLsizei, fbos.as_mut_ptr());
+                fbos[0]
+            };
+
+            gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer_object);
+
+            let texture = {
+                let mut texture_ids = vec![0];
+                gl::GenTextures(texture_ids.len() as gl::types::GLsizei, texture_ids.as_mut_ptr());
+                texture_ids[0]
+            };
+
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::DEPTH_COMPONENT as i32, width, height, 0, gl::DEPTH_COMPONENT, gl::FLOAT, null());
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as GLint);
+            gl::BindTexture(gl::TEXTURE_2D, 0);
+
+
+            gl::FramebufferTexture2D(gl::FRAMEBUFFER, gl::DEPTH_ATTACHMENT, gl::TEXTURE_2D, texture, 0);
+            gl::DrawBuffer(gl::NONE);
+            gl::ReadBuffer(gl::NONE);
+
+            if gl::CheckFramebufferStatus(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+                panic!("Failed to create frame buffer!");
+            }
+
+            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+
+            Framebuffer {
+                width,
+                height,
+                framebuffer_object,
+                texture: Texture::new(texture, width as GLuint, height as GLuint),
+                depth_buffer: 0
+            }
+        }
+    }
+
     
     pub fn bind(&self) {
         unsafe {
@@ -111,9 +155,11 @@ impl Framebuffer {
 impl Drop for Framebuffer {
     fn drop(&mut self) {
         unsafe {
-            let rbos_vec = vec![self.depth_buffer];
-            gl::DeleteRenderbuffers(rbos_vec.len() as gl::types::GLsizei, rbos_vec.as_ptr());
-            
+            if self.depth_buffer != 0 {
+                let rbos_vec = vec![self.depth_buffer];
+                gl::DeleteRenderbuffers(rbos_vec.len() as gl::types::GLsizei, rbos_vec.as_ptr());
+            }
+
             let fbos_vec = vec![self.framebuffer_object];
             gl::DeleteFramebuffers(fbos_vec.len() as gl::types::GLsizei, fbos_vec.as_ptr());
         }

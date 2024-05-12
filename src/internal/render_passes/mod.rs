@@ -17,11 +17,11 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-pub(crate) mod main_render;
+pub(crate) mod main_pass;
+pub(crate) mod depth_map_pass;
 
 use crate::internal::framebuffer::Framebuffer;
 use crate::internal::gl_renderer::GlRenderer;
-use crate::internal::renderable::Renderable;
 use crate::internal::renderer_command::RendererCommand;
 use crate::internal::shader_program::ShaderProgram;
 use crate::texture::Texture;

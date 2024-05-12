@@ -22,17 +22,24 @@ use crate::internal::gl_renderer::GlRenderer;
 use crate::internal::render_passes::PassStep;
 use crate::internal::renderer_command::RendererCommand;
 use crate::internal::shader_program::ShaderProgram;
+use crate::internal::uniform_locations::{
+    UNIFORM_LIGT_BRIGHTNESS_LOCATION, UNIFORM_LIGT_COLOR_LOCATION,
+    UNIFORM_LIGT_DIRECTION_LOCATION, UNIFORM_FOG_MIN_LOCATION,
+    UNIFORM_PROJECTION_MATRIX_LOCATION, UNIFORM_TRANSFORMATION_MATRIX_LOCATION,
+    UNIFORM_VIEW_MATRIX_LOCATION, UNIFORM_FOG_MAX_LOCATION
+};
+use crate::matrices::{build_perspective_matrix, build_transformation_matrix, build_view_matrix};
 use crate::texture::Texture;
 
-pub struct MainRender;
+pub struct MainPass;
 
-impl MainRender {
-    pub fn new() -> MainRender {
-        MainRender { }
+impl MainPass {
+    pub fn new() -> MainPass {
+        MainPass { }
     }
 }
 
-impl PassStep for MainRender {
+impl PassStep for MainPass {
     fn on_execute(&self, gl_renderer: &GlRenderer, framebuffer: &Framebuffer, shader: &ShaderProgram, commands: &Vec<RendererCommand>, _last_pass_result: &Option<&Texture>) {
         framebuffer.bind();
         shader.enable();
@@ -53,20 +60,32 @@ impl PassStep for MainRender {
                     gl_renderer.draw_elements(renderable.indices_count);
                     gl_renderer.unbind_mesh();
                 }
-                RendererCommand::SetUniformInt(location, value) => {
-                    shader.set_uniform_int(*location, *value);
+                RendererCommand::SetTransformMat(pos, rot, scale) => {
+                    let transform = build_transformation_matrix(pos, rot, *scale);
+                    shader.set_uniform_mat4(UNIFORM_TRANSFORMATION_MATRIX_LOCATION, &transform);
                 }
-                RendererCommand::SetUniformFloat(location, value) => {
-                    shader.set_uniform_float(*location, *value);
+                RendererCommand::SetViewMat(pos, rot) => {
+                    let view = build_view_matrix(pos, rot);
+                    shader.set_uniform_mat4(UNIFORM_VIEW_MATRIX_LOCATION, &view);
                 }
-                RendererCommand::SetUniformVec3(location, value) => {
-                    shader.set_uniform_vec3(*location, value);
+                RendererCommand::SetPerspectiveProjectionMat(fov, aspect_ratio) => {
+                    let projection = build_perspective_matrix(*fov, *aspect_ratio);
+                    shader.set_uniform_mat4(UNIFORM_PROJECTION_MATRIX_LOCATION, &projection);
                 }
-                RendererCommand::SetUniformVec4(location, value) => {
-                    shader.set_uniform_vec4(*location, value);
+                RendererCommand::SetFogMin(value) => {
+                    shader.set_uniform_float(UNIFORM_FOG_MIN_LOCATION, *value);
                 }
-                RendererCommand::SetUniformMat4(location, value) => {
-                    shader.set_uniform_mat4(*location, value);
+                RendererCommand::SetFogMax(value) => {
+                    shader.set_uniform_float(UNIFORM_FOG_MAX_LOCATION, *value);
+                }
+                RendererCommand::SetLightColor(color) => {
+                    shader.set_uniform_vec3(UNIFORM_LIGT_COLOR_LOCATION, color);
+                }
+                RendererCommand::SetLightDirection(direction) => {
+                    shader.set_uniform_vec3(UNIFORM_LIGT_DIRECTION_LOCATION, direction);
+                }
+                RendererCommand::SetLightBrightness(value) => {
+                    shader.set_uniform_float(UNIFORM_LIGT_BRIGHTNESS_LOCATION, *value);
                 }
             }
         }

@@ -17,14 +17,20 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-pub(crate) mod byte_buffer_reader;
-pub(crate) mod gl_renderer;
-pub(crate) mod window_context;
-pub(crate) mod shader_program;
-pub(crate) mod vertex_data;
-pub(crate) mod framebuffer;
-pub(crate) mod aspect_ratio;
-pub(crate) mod render_passes;
-pub(crate) mod renderable;
-pub(crate) mod renderer_command;
-mod uniform_locations;
+#version 450 core
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texture_coords;
+layout(location = 2) in vec3 normal;
+
+layout(location = 3)  uniform mat4 transformation_matrix;
+layout(location = 7)  uniform mat4 projection_matrix;
+layout(location = 11) uniform mat4 view_matrix;
+
+void main(void) {
+    vec4 world_position = transformation_matrix * vec4(position, 1.0);
+    vec4 world_view = view_matrix * world_position;
+    vec4 projection_world_view = projection_matrix * world_view;
+
+    gl_Position = projection_world_view;
+}

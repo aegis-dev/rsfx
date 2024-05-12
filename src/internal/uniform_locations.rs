@@ -17,20 +17,12 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use glam::{Mat4, Vec3, Vec4};
-use crate::internal::renderable::Renderable;
 
-#[derive(Copy, Clone, PartialEq)]
-pub enum RendererCommand {
-    ClearScreen(),
-    SetClearColor(f32, f32, f32),
-    Render(Renderable),
-    SetTransformMat(Vec3, Vec3, f32),
-    SetViewMat(Vec3, Vec3),
-    SetPerspectiveProjectionMat(f32, f32),
-    SetFogMin(f32),
-    SetFogMax(f32),
-    SetLightColor(Vec3),
-    SetLightDirection(Vec3),
-    SetLightBrightness(f32),
-}
+pub const UNIFORM_TRANSFORMATION_MATRIX_LOCATION: i32 = 3;
+pub const UNIFORM_PROJECTION_MATRIX_LOCATION: i32 = 7;
+pub const UNIFORM_VIEW_MATRIX_LOCATION: i32 = 11;
+pub const UNIFORM_FOG_MIN_LOCATION: i32 = 15;
+pub const UNIFORM_FOG_MAX_LOCATION: i32 = 16;
+pub const UNIFORM_LIGT_COLOR_LOCATION: i32 = 17;
+pub const UNIFORM_LIGT_DIRECTION_LOCATION: i32 = 18;
+pub const UNIFORM_LIGT_BRIGHTNESS_LOCATION: i32 = 19;
