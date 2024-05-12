@@ -20,12 +20,12 @@
 use gl::types::GLuint;
 use glam::{Vec3, Vec2};
 
-use crate::mesh::Mesh;
+use crate::mesh::{Mesh, MeshData};
 use crate::internal::vertex_data::VertexData;
 
-pub fn load_obj_mesh(obj_data: &str) -> Mesh {
+pub fn load_obj_data(obj_data: &str) -> MeshData {
     let lines: Vec<_> = obj_data.lines().collect();
-    
+        
     let mut vertices: Vec<Vec3> = vec![];
     let mut texture_coords: Vec<Vec2> = vec![];
     let mut normals: Vec<Vec3> = vec![];
@@ -92,5 +92,9 @@ pub fn load_obj_mesh(obj_data: &str) -> Mesh {
         }
     }
     
-    Mesh::from_data(&vertex_data, &indices)
+    MeshData::from_data(vertex_data, indices)
+}
+
+pub fn load_obj_mesh(obj_data: &str) -> Mesh {
+    Mesh::from_mesh_data(&load_obj_data(obj_data))
 }

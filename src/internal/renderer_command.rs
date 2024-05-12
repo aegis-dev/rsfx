@@ -17,16 +17,17 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use crate::input::Input;
-use crate::renderer::Renderer;
-use crate::game_status::GameStatus;
+use glam::{Mat4, Vec3, Vec4};
+use crate::internal::renderable::Renderable;
 
-pub trait Scene {
-    fn on_start(&mut self, renderer: &mut Renderer);
-
-    fn on_update(&mut self, game_status: &mut GameStatus, renderer: &mut Renderer, input: &Input, delta_time: f64) -> Option<Box<dyn Scene>>;
-    
-    fn on_render(&mut self, renderer: &mut Renderer);
-
-    fn on_destroy(&mut self);
+#[derive(Copy, Clone, PartialEq)]
+pub enum RendererCommand {
+    ClearScreen(),
+    SetClearColor(f32, f32, f32),
+    Render(Renderable),
+    SetUniformInt(i32, i32),
+    SetUniformFloat(i32, f32),
+    SetUniformVec3(i32, Vec3),
+    SetUniformVec4(i32, Vec4),
+    SetUniformMat4(i32, Mat4),
 }

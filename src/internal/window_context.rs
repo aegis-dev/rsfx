@@ -21,27 +21,21 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use sdl2::Sdl;
 use sdl2::VideoSubsystem;
-use sdl2::video::Window;
-use sdl2::event::Event;
+use sdl2::video::{GLContext, Window};
 
-use crate::internal::gl_renderer::GlRenderer;
-use crate::internal::shader_program::ShaderProgram;
 use crate::input::Input;
-use crate::renderer::Renderer;
 
-pub struct RsfxContext {
+pub struct WindowContext {
     sdl: Sdl,
     video_subsystem: VideoSubsystem,
     window: Window,
-    renderer: Renderer,
-    input: Input,
+    gl_context: GLContext,
+    display_width: i32,
+    display_height: i32,
 }
 
-const UNIFORM_PALETTE_SIZE_LOCATION: i32 = 2;
-const UNIFORM_BACKGROUND_COLOR_INDEX_LOCATION: i32 = 3;
-
-impl RsfxContext {
-    pub fn new(game_name: &str) -> Result<RsfxContext, String> {
+impl WindowContext {
+    pub fn new(game_name: &str) -> Result<WindowContext, String> {
         let sdl = sdl2::init().unwrap();
         let video_subsystem = sdl.video().unwrap();
         let gl_attr = video_subsystem.gl_attr();
@@ -72,75 +66,40 @@ impl RsfxContext {
         // disable vsync
         video_subsystem.gl_set_swap_interval(0).unwrap();
 
-        // Load shaders
-        let shader = {
-            use std::ffi::CString;
-            ShaderProgram::load_shaders(
-                &CString::new(include_str!("shaders/framebuffer_shader.vert")).unwrap(),
-                &CString::new(include_str!("shaders/framebuffer_shader.frag")).unwrap(),
-            )
-        };
-        
-        let framebuffer_width = 854;
-        let framebuffer_height = 480;
-        
-        let gl_renderer = GlRenderer::new(gl_context, shader, framebuffer_width, framebuffer_height, display_width, display_height);
-
-        let renderer = Renderer::new(gl_renderer);
-        renderer.set_clear_color(0.0, 0.0, 0.0);
-
-        let input = Input::new(
-            framebuffer_width,
-            framebuffer_height,
-            display_width,
-            display_height
-        );
-
-        Ok(RsfxContext {
+        Ok(WindowContext {
             sdl,
             video_subsystem,
             window,
-            renderer,
-            input
+            gl_context,
+            display_width,
+            display_height,
         })
     }
 
-    pub fn poll_input_events(&mut self) {
+    pub fn get_display_width(&self) -> i32 {
+        self.display_width
+    }
+
+    pub fn get_display_height(&self) -> i32 {
+        self.display_height
+    }
+
+    pub fn poll_input_events(&mut self, input: &mut Input) {
         let mut event_pump = self.sdl.event_pump().unwrap();
         for event in event_pump.poll_iter() {
-            match self.input.process_sdl_event(&event) {
+            match input.process_sdl_event(&event) {
                 Err(error) => println!("{}", error),
                 Ok(_) => {}
             };
         }
     }
-    
-    pub fn get_input(&self) -> &Input {
-        &self.input
-    }
-    
-    pub fn clear_input_states(&mut self) {
-        self.input.clear_states();
-    }
+    //
+    // pub fn poll_sdl_input_event(&mut self) -> Option<Event> {
+    //     let mut event_pump = self.sdl.event_pump().unwrap();
+    //     event_pump.poll_event()
+    // }
 
-    pub fn poll_sdl_input_event(&mut self) -> Option<Event> {
-        let mut event_pump = self.sdl.event_pump().unwrap();
-        event_pump.poll_event()
-    }
-
-    pub fn get_renderer(&self) -> &Renderer {
-        &self.renderer
-    }
-    
-    pub fn begin_rendering(&self) {
-        self.renderer.begin_rendering();
-    }
-    
-    pub fn render_framebuffer(&self) {
-        self.renderer.render_framebuffer();
-    }
-    
-    pub fn swap_buffer(&self) { 
+    pub fn swap_buffer(&self) {
         self.window.gl_swap_window(); 
     } 
 

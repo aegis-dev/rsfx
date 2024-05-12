@@ -17,13 +17,4 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-pub(crate) mod byte_buffer_reader;
-pub(crate) mod gl_renderer;
-pub(crate) mod window_context;
-pub(crate) mod shader_program;
-pub(crate) mod vertex_data;
-pub(crate) mod framebuffer;
-pub(crate) mod aspect_ratio;
-pub(crate) mod render_passes;
-pub(crate) mod renderable;
-pub(crate) mod renderer_command;
+pub mod static_world;

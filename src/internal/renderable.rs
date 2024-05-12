@@ -17,16 +17,19 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use crate::input::Input;
-use crate::renderer::Renderer;
-use crate::game_status::GameStatus;
+use gl::types::{GLsizei, GLuint};
+use crate::mesh::Mesh;
+use crate::texture::Texture;
 
-pub trait Scene {
-    fn on_start(&mut self, renderer: &mut Renderer);
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct Renderable {
+    pub mesh_id: GLuint,
+    pub indices_count: GLsizei,
+    pub texture_id: GLuint,
+}
 
-    fn on_update(&mut self, game_status: &mut GameStatus, renderer: &mut Renderer, input: &Input, delta_time: f64) -> Option<Box<dyn Scene>>;
-    
-    fn on_render(&mut self, renderer: &mut Renderer);
-
-    fn on_destroy(&mut self);
+impl Renderable {
+    pub fn new(mesh: &Mesh, texture: &Texture) -> Renderable {
+        Renderable { mesh_id: mesh.vao_id(), indices_count: mesh.indices_count(), texture_id: texture.texture_id() }
+    }
 }

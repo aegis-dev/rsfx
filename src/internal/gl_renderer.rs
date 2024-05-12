@@ -22,8 +22,12 @@ use std::ptr::null;
 use std::ffi::CString;
 
 use gl;
+use gl::types::{GLenum, GLsizei, GLuint};
 use glam::{Mat4, Vec3, Vec4, Vec2};
-use sdl2::video::GLContext;
+use crate::internal::render_passes::main_render::MainRender;
+use crate::internal::render_passes::RenderPass;
+use crate::internal::renderable::Renderable;
+use crate::internal::renderer_command::RendererCommand;
 
 use crate::internal::shader_program::ShaderProgram;
 use crate::mesh::Mesh;
@@ -33,25 +37,47 @@ use super::framebuffer::Framebuffer;
 use super::vertex_data::{self, VertexData};
 
 pub struct GlRenderer {
-    gl_context: GLContext,
-    framebuffer_shader: ShaderProgram,
-    framebuffer: Framebuffer,
-    framebuffer_quad: Mesh,
+    render_passes: Vec<RenderPass>,
+    screen_quad: Mesh,
     screen_shader: ShaderProgram,
     window_width: i32,
     window_height: i32,
     window_aspect_ratio: AspectRatio,
+    framebuffer_width: i32,
+    framebuffer_height: i32,
 }
 
 impl GlRenderer {
-    pub fn new(gl_context: GLContext, framebuffer_shader: ShaderProgram, framebuffer_width: i32, framebuffer_height: i32, window_width: i32, window_height: i32) -> GlRenderer {
+    pub fn new(framebuffer_width: i32, framebuffer_height: i32, window_width: i32, window_height: i32) -> GlRenderer {
         unsafe {
     
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
-        
-        let framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
+
+        let mut render_passes = vec![];
+
+        // Main renderer
+        {
+            let framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
+            let frambuffer_aspect_ratio = AspectRatio::from(framebuffer_width, framebuffer_height);
+            if frambuffer_aspect_ratio != AspectRatio::R16by9 {
+                panic!("Unexpected framebuffer aspect ratio! Expecting framebuffer resolution to be 16:9");
+            }
+
+            let shader = {
+                ShaderProgram::load_shaders(
+                    &CString::new(include_str!("shaders/framebuffer_shader.vert")).unwrap(),
+                    &CString::new(include_str!("shaders/framebuffer_shader.frag")).unwrap(),
+                )
+            };
+
+            let pass_steps = Box::new(MainRender::new());
+
+            let render_pass = RenderPass::new(framebuffer, shader, pass_steps);
+            render_passes.push(render_pass);
+        }
+
         let screen_shader = {
             ShaderProgram::load_shaders(
                 &CString::new(include_str!("shaders/screen_shader.vert")).unwrap(),
@@ -68,24 +94,19 @@ impl GlRenderer {
             VertexData::new(Vec3::new( 1.0,  1.0, 0.0), Vec2::new(1.0, 1.0), Vec3::new(0.0, 0.0, 0.0))
         ];
         let indices = vec![0, 1, 2, 3, 4, 5];
-        let framebuffer_quad = Mesh::from_data(&quad_data, &indices);
+        let screen_quad = Mesh::from_raw_data(&quad_data, &indices);
         
         let window_aspect_ratio = AspectRatio::from(window_width, window_height);
-        let frambuffer_aspect_ratio = AspectRatio::from(framebuffer_width, framebuffer_height);
-        
-        if frambuffer_aspect_ratio != AspectRatio::R16by9 {
-            panic!("Unexpected framebuffer aspect ratio! Expecting framebuffer resolution to be 16:9");
-        }
 
         GlRenderer {
-            gl_context,
-            framebuffer_shader,
-            framebuffer,
-            framebuffer_quad,
+            render_passes,
+            screen_quad,
             screen_shader,
             window_width,
             window_height,
-            window_aspect_ratio
+            window_aspect_ratio,
+            framebuffer_width,
+            framebuffer_height
         }
     }
 
@@ -107,19 +128,18 @@ impl GlRenderer {
         }
     }
 
-    pub fn begin_rendering(&self) {
-        self.framebuffer.bind();
-        self.framebuffer_shader.enable();
-        self.enable_depth_test();
-        self.set_viewposrt_size(0, 0, self.framebuffer.get_width(), self.framebuffer.get_height());
-    }
-    
-    pub fn render_framebuffer(&self) {
-        self.framebuffer.unbind();
+    pub fn run_passes(&self, commands: &Vec<RendererCommand>) {
+        let mut last_pass_result = None;
+
+        for render_pass in &self.render_passes {
+            render_pass.on_execute(&self, commands, &last_pass_result);
+            last_pass_result = Some(render_pass.get_pass_result());
+        }
+
         self.screen_shader.enable();
         self.disable_depth_test();
         self.set_framebuffer_viewport_for_window();
-        self.render(&self.framebuffer_quad, self.framebuffer.get_texture());
+        self.render_mesh_with_one_textures(&self.screen_quad, last_pass_result.unwrap());
     }
 
     pub fn set_clear_color(&self, r: f32, g: f32, b: f32) {
@@ -132,59 +152,66 @@ impl GlRenderer {
         }
     }
 
-    pub fn set_uniform_int(&self, location: i32, value: i32) {
-        self.framebuffer_shader.set_uniform_int(location, value);
-    }
-    
-    pub fn set_uniform_float(&self, location: i32, value: f32) {
-        self.framebuffer_shader.set_uniform_float(location, value);
-    }
-    
-    pub fn set_uniform_vec3(&self, location: i32, value: &Vec3) {
-        self.framebuffer_shader.set_uniform_vec3(location, value);
-    }
-    
-    pub fn set_uniform_vec4(&self, location: i32, value: &Vec4) {
-        self.framebuffer_shader.set_uniform_vec4(location, value);
-    }
-
-    pub fn set_uniform_mat4(&self, location: i32, value: &Mat4) {
-        self.framebuffer_shader.set_uniform_mat4(location, value);
-    }
-
-    pub fn render(&self, mesh: &Mesh, texture: &Texture) {
+    pub fn bind_mesh(&self, mesh_id: GLuint) {
         unsafe {
-            gl::BindVertexArray(mesh.vao_id());
-            
+            gl::BindVertexArray(mesh_id);
+
             for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
                 gl::EnableVertexAttribArray(*attribute_id);
             }
+        }
+    }
 
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, texture.texture_id());
-
-            gl::DrawElements(gl::TRIANGLES, mesh.indices_count(), gl::UNSIGNED_INT, null());
-
+    pub fn unbind_mesh(&self) {
+        unsafe {
             for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
                 gl::DisableVertexAttribArray(*attribute_id);
             }
-            
+
             gl::BindVertexArray(0);
         }
     }
-    
-    pub fn set_viewposrt_size(&self, x: i32, y: i32, width: i32, height: i32) {
+
+    pub fn bind_texture(&self, texture_id: GLuint, texture_slot: GLenum) {
+        unsafe {
+            gl::ActiveTexture(texture_slot);
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
+        }
+    }
+
+    pub fn draw_elements(&self, indices_count: GLsizei) {
+        unsafe {
+            gl::DrawElements(gl::TRIANGLES, indices_count, gl::UNSIGNED_INT, null());
+        }
+    }
+
+    pub fn render_mesh_with_one_textures(&self, mesh: &Mesh, texture: &Texture) {
+        self.bind_mesh(mesh.vao_id());
+        self.bind_texture(texture.texture_id(), gl::TEXTURE0);
+        self.draw_elements(mesh.indices_count());
+        self.unbind_mesh();
+    }
+
+    pub fn render_mesh_with_two_textures(&self, mesh: &Mesh, texture_1: &Texture, texture_2: &Texture) {
+        self.bind_mesh(mesh.vao_id());
+        self.bind_texture(texture_1.texture_id(), gl::TEXTURE0);
+        self.bind_texture(texture_2.texture_id(), gl::TEXTURE1);
+        self.draw_elements(mesh.indices_count());
+        self.unbind_mesh();
+    }
+
+    pub fn set_viewport_size(&self, x: i32, y: i32, width: i32, height: i32) {
         unsafe {
             gl::Viewport(x, y, width, height);
         }
     }
     
     pub fn set_framebuffer_viewport_for_window(&self) {
-        let width = self.framebuffer.get_width();
-        let height = self.framebuffer.get_height();
+        let width = self.framebuffer_width;
+        let height = self.framebuffer_height;
         
         if self.window_aspect_ratio == AspectRatio::R16by9 {
-            self.set_viewposrt_size(0, 0, self.window_width, self.window_height);
+            self.set_viewport_size(0, 0, self.window_width, self.window_height);
         } else if self.window_aspect_ratio == AspectRatio::WiderThan16by9 {
             let min_height = cmp::min(self.window_height, height);
             let max_height = cmp::max(self.window_height, height);
@@ -194,7 +221,7 @@ impl GlRenderer {
             let viewport_height = self.window_height;
             let offset_x = (self.window_width - viewport_width) / 2;
             
-            self.set_viewposrt_size(offset_x, 0, viewport_width, viewport_height);
+            self.set_viewport_size(offset_x, 0, viewport_width, viewport_height);
         } else {
             let min_width = cmp::min(self.window_width, width);
             let max_width = cmp::max(self.window_width, width);
@@ -204,7 +231,7 @@ impl GlRenderer {
             let viewport_height = (height as f32 * modifier) as i32;
             let offset_y = (self.window_height - viewport_height) / 2;
             
-            self.set_viewposrt_size(0, offset_y, viewport_width, viewport_height);
+            self.set_viewport_size(0, offset_y, viewport_width, viewport_height);
         }
     }
 }

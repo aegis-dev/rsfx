@@ -21,7 +21,6 @@ use std::mem;
 use gl::types::GLuint;
 use glam::{Vec3, Vec2};
 
-
 pub const VERTEX_POSITION_ATTRIBUTE_ID: GLuint = 0;
 pub const VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID: GLuint = 1;
 pub const VERTEX_NORMAL_ATTRIBUTE_ID: GLuint = 2;
@@ -38,8 +37,7 @@ pub const VERTEX_NORMAL_ATTRIBUTE_SIZE_IN_FLOATS: GLuint = mem::size_of::<Vec3>(
 
 pub const VERTEX_DATA_SIZE: GLuint = mem::size_of::<VertexData>() as GLuint;
 
-
-#[repr(packed(1))]
+#[repr(packed(4))]
 #[derive(Copy, Clone)]
 pub struct VertexData {
     pub position: Vec3,
@@ -50,5 +48,9 @@ pub struct VertexData {
 impl VertexData {
     pub fn new(position: Vec3, texture_coordinate: Vec2, normal: Vec3) -> VertexData {
         VertexData { position, texture_coordinate, normal }
+    }
+    
+    pub fn get_position(&self) -> &Vec3 {
+        &self.position
     }
 }

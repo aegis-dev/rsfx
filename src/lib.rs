@@ -33,10 +33,14 @@ pub mod renderer;
 pub mod obj_loader;
 pub mod matrices;
 pub mod math;
+pub mod collision;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
-use crate::internal::rsfx_context::RsfxContext;
+use crate::input::Input;
+use crate::internal::gl_renderer::GlRenderer;
+use crate::internal::window_context::WindowContext;
+use crate::renderer::Renderer;
 
 pub struct Rsfx;
 
@@ -49,31 +53,42 @@ impl Rsfx {
 
     // This func is mutable to ensure that this object is not used more than once when game is running
     pub fn run(&mut self, game_name: &str, starting_scene: Box<dyn Scene>) -> Result<(), String> {
-        let mut rsfx_context = RsfxContext::new(game_name)?;
+        let mut window_context = WindowContext::new(game_name)?;
+
+        let display_width = window_context.get_display_width();
+        let display_height = window_context.get_display_height();
+
+        let framebuffer_width = 854;
+        let framebuffer_height = 480;
+
+        let gl_renderer = GlRenderer::new(framebuffer_width, framebuffer_height, display_width, display_height);
+
+        let mut renderer = Renderer::new(gl_renderer);
+        renderer.set_clear_color(0.0, 0.0, 0.0);
+
+        let mut input = Input::new(
+            framebuffer_width,
+            framebuffer_height,
+            display_width,
+            display_height
+        );
 
         let mut current_scene = starting_scene;
         
-        rsfx_context.begin_rendering();
-
-        current_scene.on_start(&mut rsfx_context.get_renderer());
+        current_scene.on_start(&mut renderer);
         
-        let delta_time = RsfxContext::time_now();
+        let delta_time = WindowContext::time_now();
         let mut last_frame_time = delta_time;
 
         let mut game_status = GameStatus::new();
         'main_loop: loop {
-            rsfx_context.poll_input_events();
+            window_context.poll_input_events(&mut input);
             
-            {
-                let input = rsfx_context.get_input();
-                if input.should_quit() {
-                    break 'main_loop;
-                }
+            if input.should_quit() {
+                break 'main_loop;
             }
-      
-            rsfx_context.begin_rendering();
-            
-            let time_now = RsfxContext::time_now();
+
+            let time_now = WindowContext::time_now();
             if time_now >= last_frame_time + Rsfx::TICK_RATE {
                 let delta_time = time_now - last_frame_time;
                 last_frame_time = time_now;
@@ -81,14 +96,14 @@ impl Rsfx {
                 // Update scene
                 match current_scene.on_update(
                     &mut game_status,
-                    rsfx_context.get_renderer(),
-                    rsfx_context.get_input(),
+                    &mut renderer,
+                    &input,
                     delta_time as f64 / 1000.0
                 ) {
                     Some(scene) => {
                         current_scene.on_destroy();
                         current_scene = scene;
-                        current_scene.on_start(rsfx_context.get_renderer());
+                        current_scene.on_start(&mut renderer);
                     }
                     _ => {
                         if game_status.should_quit() {
@@ -97,13 +112,13 @@ impl Rsfx {
                     }
                 };
                 
-                rsfx_context.clear_input_states();
+                input.clear_states();
             }
             
-            current_scene.on_render(rsfx_context.get_renderer());
-            
-            rsfx_context.render_framebuffer();
-            rsfx_context.swap_buffer();
+            current_scene.on_render(&mut renderer);
+
+            renderer.run_passes();
+            window_context.swap_buffer();
         }
 
         Ok(())

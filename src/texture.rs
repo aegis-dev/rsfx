@@ -19,6 +19,7 @@
 
 use std::ffi::c_void;
 use gl::{self, types::{GLuint, GLint}};
+use gl::types::GLsizei;
 
 use crate::internal::byte_buffer_reader::ByteBufferReader;
 
@@ -76,11 +77,11 @@ impl Texture {
         Ok(Texture::from_data(&raw_image_data, width as u32, height as u32, mode))
     }
     
-    pub fn from_data(data: &Vec<u8>, width: gl::types::GLuint, height: gl::types::GLuint, mode: ImageMode) -> Texture {
+    pub fn from_data(data: &Vec<u8>, width: GLuint, height: GLuint, mode: ImageMode) -> Texture {
         let texture_id = {
             let mut texture_ids = vec![0];
             unsafe {
-                gl::GenTextures(texture_ids.len() as gl::types::GLsizei, texture_ids.as_mut_ptr());
+                gl::GenTextures(texture_ids.len() as GLsizei, texture_ids.as_mut_ptr());
             }
             texture_ids[0]
         };
@@ -94,17 +95,17 @@ impl Texture {
 
             let internal_format = match mode {
                 //ImageMode::RED => { 1 }
-                _ => { mode as gl::types::GLint }
+                _ => { mode as GLint }
             };
 
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
                 internal_format,
-                width as gl::types::GLint,
-                height as gl::types::GLint,
+                width as GLint,
+                height as GLint,
                 0,
-                mode as gl::types::GLuint,
+                mode as GLuint,
                 gl::UNSIGNED_BYTE,
                 data.as_ptr() as *const c_void
             );
@@ -113,15 +114,15 @@ impl Texture {
         Texture { texture_id, width, height }
     }
 
-    pub fn texture_id(&self) -> gl::types::GLuint {
+    pub fn texture_id(&self) -> GLuint {
         self.texture_id
     }
 
-    pub fn width(&self) -> gl::types::GLuint {
+    pub fn width(&self) -> GLuint {
         self.width
     }
 
-    pub fn height(&self) -> gl::types::GLuint {
+    pub fn height(&self) -> GLuint {
         self.height
     }
 
@@ -131,17 +132,17 @@ impl Texture {
 
             let internal_format = match mode {
                 //ImageMode::ColorIndex => { 1 }
-                _ => { mode as gl::types::GLint }
+                _ => { mode as GLint }
             };
 
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
                 internal_format,
-                self.width as gl::types::GLint,
-                self.height as gl::types::GLint,
+                self.width as GLint,
+                self.height as GLint,
                 0,
-                mode as gl::types::GLuint,
+                mode as GLuint,
                 gl::UNSIGNED_BYTE,
                 data.as_ptr() as *const c_void
             );
@@ -153,7 +154,7 @@ impl Drop for Texture {
     fn drop(&mut self) {
         unsafe {
             let temp_vec = vec![self.texture_id];
-            gl::DeleteTextures(temp_vec.len() as gl::types::GLsizei, temp_vec.as_ptr());
+            gl::DeleteTextures(temp_vec.len() as GLsizei, temp_vec.as_ptr());
         }
     }
 }
