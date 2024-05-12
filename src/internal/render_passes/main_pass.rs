@@ -24,15 +24,15 @@ use crate::internal::renderer_command::RendererCommand;
 use crate::internal::shader_program::ShaderProgram;
 use crate::texture::Texture;
 
-pub struct MainRender;
+pub struct MainPass;
 
-impl MainRender {
-    pub fn new() -> MainRender {
-        MainRender { }
+impl MainPass {
+    pub fn new() -> MainPass {
+        MainPass { }
     }
 }
 
-impl PassStep for MainRender {
+impl PassStep for MainPass {
     fn on_execute(&self, gl_renderer: &GlRenderer, framebuffer: &Framebuffer, shader: &ShaderProgram, commands: &Vec<RendererCommand>, _last_pass_result: &Option<&Texture>) {
         framebuffer.bind();
         shader.enable();

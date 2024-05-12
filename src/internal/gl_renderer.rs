@@ -23,10 +23,9 @@ use std::ffi::CString;
 
 use gl;
 use gl::types::{GLenum, GLsizei, GLuint};
-use glam::{Mat4, Vec3, Vec4, Vec2};
-use crate::internal::render_passes::main_render::MainRender;
+use glam::{Vec3, Vec2};
+use crate::internal::render_passes::main_pass::MainPass;
 use crate::internal::render_passes::RenderPass;
-use crate::internal::renderable::Renderable;
 use crate::internal::renderer_command::RendererCommand;
 
 use crate::internal::shader_program::ShaderProgram;
@@ -67,12 +66,12 @@ impl GlRenderer {
 
             let shader = {
                 ShaderProgram::load_shaders(
-                    &CString::new(include_str!("shaders/framebuffer_shader.vert")).unwrap(),
-                    &CString::new(include_str!("shaders/framebuffer_shader.frag")).unwrap(),
+                    &CString::new(include_str!("shaders/main_pass_shader.vert")).unwrap(),
+                    &CString::new(include_str!("shaders/main_pass_shader.frag")).unwrap(),
                 )
             };
 
-            let pass_steps = Box::new(MainRender::new());
+            let pass_steps = Box::new(MainPass::new());
 
             let render_pass = RenderPass::new(framebuffer, shader, pass_steps);
             render_passes.push(render_pass);
