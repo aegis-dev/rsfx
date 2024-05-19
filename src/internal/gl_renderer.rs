@@ -154,19 +154,11 @@ impl GlRenderer {
     pub fn bind_mesh(&self, mesh_id: GLuint) {
         unsafe {
             gl::BindVertexArray(mesh_id);
-
-            for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
-                gl::EnableVertexAttribArray(*attribute_id);
-            }
         }
     }
 
     pub fn unbind_mesh(&self) {
         unsafe {
-            for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
-                gl::DisableVertexAttribArray(*attribute_id);
-            }
-
             gl::BindVertexArray(0);
         }
     }

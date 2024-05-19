@@ -69,6 +69,12 @@ impl Mesh {
             gl::BindVertexArray(vao_id);
         }
 
+        unsafe {
+            for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
+                gl::EnableVertexAttribArray(*attribute_id);
+            }
+        }
+
         let mut vbo_ids: Vec<GLuint> = vec![];
         vbo_ids.push(Mesh::bind_indices_buffer(indices));
         vbo_ids.push(Mesh::store_vertex_data_in_attribute_list(vertex_data));
