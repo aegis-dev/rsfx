@@ -24,12 +24,12 @@ use crate::texture::Texture;
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Renderable {
     pub mesh_id: GLuint,
-    pub indices_count: GLsizei,
+    pub vertices_count: GLsizei,
     pub texture_id: GLuint,
 }
 
 impl Renderable {
     pub fn new(mesh: &Mesh, texture: &Texture) -> Renderable {
-        Renderable { mesh_id: mesh.vao_id(), indices_count: mesh.indices_count(), texture_id: texture.texture_id() }
+        Renderable { mesh_id: mesh.vao_id(), vertices_count: mesh.vertices_count(), texture_id: texture.texture_id() }
     }
 }

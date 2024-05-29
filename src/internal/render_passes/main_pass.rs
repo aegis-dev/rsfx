@@ -50,7 +50,7 @@ impl PassStep for MainPass {
                 RendererCommand::Render(renderable) => {
                     gl_renderer.bind_mesh(renderable.mesh_id);
                     gl_renderer.bind_texture(renderable.texture_id, gl::TEXTURE0);
-                    gl_renderer.draw_elements(renderable.indices_count);
+                    gl_renderer.draw_arrays(renderable.vertices_count);
                     gl_renderer.unbind_mesh();
                 }
                 RendererCommand::SetUniformInt(location, value) => {

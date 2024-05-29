@@ -30,5 +30,5 @@ pub fn get_direction_from_euler(rotation: &Vec3) -> Vec3 {
 
 pub fn transform_vector(vector: &Vec3, position: &Vec3, rotation: &Vec3, scale: f32) -> Vec3 {
     let transform = matrices::build_transformation_matrix(position, rotation, scale);
-    transform.transform_vector3(vector.clone())
+    transform.transform_point3(vector.clone())
 }

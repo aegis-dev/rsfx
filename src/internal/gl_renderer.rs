@@ -18,7 +18,6 @@
 //
 
 use std::cmp;
-use std::ptr::null;
 use std::ffi::CString;
 
 use gl;
@@ -33,7 +32,7 @@ use crate::mesh::Mesh;
 use crate::texture::Texture;
 use super::aspect_ratio::AspectRatio;
 use super::framebuffer::Framebuffer;
-use super::vertex_data::{self, VertexData};
+use crate::vertex_data::VertexData;
 
 pub struct GlRenderer {
     render_passes: Vec<RenderPass>,
@@ -92,8 +91,7 @@ impl GlRenderer {
             VertexData::new(Vec3::new(-1.0, -1.0, 0.0), Vec2::new(0.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
             VertexData::new(Vec3::new( 1.0,  1.0, 0.0), Vec2::new(1.0, 1.0), Vec3::new(0.0, 0.0, 0.0))
         ];
-        let indices = vec![0, 1, 2, 3, 4, 5];
-        let screen_quad = Mesh::from_raw_data(&quad_data, &indices);
+        let screen_quad = Mesh::from_raw_data(&quad_data);
         
         let window_aspect_ratio = AspectRatio::from(window_width, window_height);
 
@@ -170,16 +168,16 @@ impl GlRenderer {
         }
     }
 
-    pub fn draw_elements(&self, indices_count: GLsizei) {
+    pub fn draw_arrays(&self, indices_count: GLsizei) {
         unsafe {
-            gl::DrawElements(gl::TRIANGLES, indices_count, gl::UNSIGNED_INT, null());
+            gl::DrawArrays(gl::TRIANGLES, 0, indices_count);
         }
     }
 
     pub fn render_mesh_with_one_textures(&self, mesh: &Mesh, texture: &Texture) {
         self.bind_mesh(mesh.vao_id());
         self.bind_texture(texture.texture_id(), gl::TEXTURE0);
-        self.draw_elements(mesh.indices_count());
+        self.draw_arrays(mesh.vertices_count());
         self.unbind_mesh();
     }
 
@@ -187,7 +185,7 @@ impl GlRenderer {
         self.bind_mesh(mesh.vao_id());
         self.bind_texture(texture_1.texture_id(), gl::TEXTURE0);
         self.bind_texture(texture_2.texture_id(), gl::TEXTURE1);
-        self.draw_elements(mesh.indices_count());
+        self.draw_arrays(mesh.vertices_count());
         self.unbind_mesh();
     }
 

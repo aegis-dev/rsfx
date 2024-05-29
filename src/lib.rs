@@ -34,6 +34,7 @@ pub mod obj_loader;
 pub mod matrices;
 pub mod math;
 pub mod collision;
+pub mod vertex_data;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;

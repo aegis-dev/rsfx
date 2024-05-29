@@ -34,7 +34,7 @@ out vec2 frag_texture_coords;
 out vec3 frag_normal;
 out float frag_fog_density;
 
-vec2 resolution = vec2(854.0, 480.0);
+vec2 resolution = vec2(427.0, 240.0);
 
 // Position is post MVP translation of vertex
 vec4 to_low_precision(vec4 position, vec2 resolution) {

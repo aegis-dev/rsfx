@@ -22,41 +22,40 @@ use std::ffi::c_void;
 use std::ptr::null;
 
 use gl::types::{GLuint, GLsizei, GLint, GLfloat};
+use crate::internal::vertex_attributes;
 
-use crate::internal::vertex_data::{self, VertexData};
+use crate::vertex_data::{self, VertexData};
 
 pub struct MeshData {
     vertex_data: Vec<VertexData>,
-    indices: Vec<u32>,
+}
+
+impl MeshData {
+    pub fn from_data(vertex_data: Vec<VertexData>) -> MeshData {
+        MeshData { vertex_data }
+    }
+    
+    pub fn get_vertices(&self) -> &Vec<VertexData> {
+        &self.vertex_data
+    }
+
+    pub fn get_vertices_count(&self) -> GLsizei {
+        self.vertex_data.len() as GLsizei
+    }
 }
 
 pub struct Mesh {
     vao_id: GLuint,
     vbo_ids: Vec<GLuint>,
     vertices_count: GLsizei,
-    indices_count: GLsizei,
-}
-
-impl MeshData {
-    pub fn from_data(vertex_data: Vec<VertexData>, indices: Vec<u32>) -> MeshData {
-        MeshData { vertex_data, indices }
-    }
-    
-    pub fn get_vertex_data(&self) -> &Vec<VertexData> {
-        &self.vertex_data
-    }
-    
-    pub fn get_indices(&self) -> &Vec<u32> {
-        &self.indices
-    }
 }
 
 impl Mesh {
     pub fn from_mesh_data(mesh_data: &MeshData) -> Mesh {
-        Mesh::from_raw_data(mesh_data.get_vertex_data(), mesh_data.get_indices())
+        Mesh::from_raw_data(mesh_data.get_vertices())
     }
     
-    pub fn from_raw_data(vertex_data: &Vec<VertexData>, indices: &Vec<u32>) -> Mesh {
+    pub fn from_raw_data(vertex_data: &Vec<VertexData>) -> Mesh {
         let vao_id = {
             let mut vao_ids = vec![0];
             unsafe {
@@ -70,13 +69,12 @@ impl Mesh {
         }
 
         unsafe {
-            for attribute_id in vertex_data::VERTEX_DATA_ATTRIBUTES {
+            for attribute_id in vertex_attributes::VERTEX_DATA_ATTRIBUTES {
                 gl::EnableVertexAttribArray(*attribute_id);
             }
         }
 
         let mut vbo_ids: Vec<GLuint> = vec![];
-        vbo_ids.push(Mesh::bind_indices_buffer(indices));
         vbo_ids.push(Mesh::store_vertex_data_in_attribute_list(vertex_data));
 
         unsafe {
@@ -84,8 +82,7 @@ impl Mesh {
         }
 
         let vertices_count = vertex_data.len() as GLsizei;
-        let indices_count = indices.len() as GLsizei;
-        Mesh { vao_id, vbo_ids, vertices_count, indices_count }
+        Mesh { vao_id, vbo_ids, vertices_count}
     }
 
     fn bind_indices_buffer(indices: &Vec<GLuint>) -> GLuint {
@@ -135,30 +132,30 @@ impl Mesh {
         
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo_id);
-            gl::BufferData(gl::ARRAY_BUFFER, (vertex_data::VERTEX_DATA_SIZE as usize * vertex_data.len()) as isize, vertex_data.as_ptr() as *const c_void, gl::STATIC_DRAW);
+            gl::BufferData(gl::ARRAY_BUFFER, (vertex_attributes::VERTEX_DATA_SIZE as usize * vertex_data.len()) as isize, vertex_data.as_ptr() as *const c_void, gl::STATIC_DRAW);
             gl::VertexAttribPointer(
-                vertex_data::VERTEX_POSITION_ATTRIBUTE_ID,
-                vertex_data::VERTEX_POSITION_ATTRIBUTE_SIZE_IN_FLOATS as i32,
+                vertex_attributes::VERTEX_POSITION_ATTRIBUTE_ID,
+                vertex_attributes::VERTEX_POSITION_ATTRIBUTE_SIZE_IN_FLOATS as i32,
                 gl::FLOAT,
                 gl::FALSE,
-                vertex_data::VERTEX_DATA_SIZE as i32,
-                vertex_data::VERTEX_DATA_POSITION_OFFSET as _
+                vertex_attributes::VERTEX_DATA_SIZE as i32,
+                vertex_attributes::VERTEX_DATA_POSITION_OFFSET as _
             );
             gl::VertexAttribPointer(
-                vertex_data::VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID,
-                vertex_data::VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_SIZE_IN_FLOATS as i32,
+                vertex_attributes::VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID,
+                vertex_attributes::VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_SIZE_IN_FLOATS as i32,
                 gl::FLOAT,
                 gl::FALSE,
-                vertex_data::VERTEX_DATA_SIZE as i32,
-                vertex_data::VERTEX_DATA_TEXTURE_COORDINATE_OFFSET as _
+                vertex_attributes::VERTEX_DATA_SIZE as i32,
+                vertex_attributes::VERTEX_DATA_TEXTURE_COORDINATE_OFFSET as _
             );
             gl::VertexAttribPointer(
-                vertex_data::VERTEX_NORMAL_ATTRIBUTE_ID,
-                vertex_data::VERTEX_NORMAL_ATTRIBUTE_SIZE_IN_FLOATS as i32,
+                vertex_attributes::VERTEX_NORMAL_ATTRIBUTE_ID,
+                vertex_attributes::VERTEX_NORMAL_ATTRIBUTE_SIZE_IN_FLOATS as i32,
                 gl::FLOAT,
                 gl::FALSE,
-                vertex_data::VERTEX_DATA_SIZE as i32,
-                vertex_data::VERTEX_DATA_NORMAL_OFFSET as _
+                vertex_attributes::VERTEX_DATA_SIZE as i32,
+                vertex_attributes::VERTEX_DATA_NORMAL_OFFSET as _
             );
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
         }
@@ -172,10 +169,6 @@ impl Mesh {
 
     pub fn vertices_count(&self) -> GLsizei {
         self.vertices_count
-    }
-
-    pub fn indices_count(&self) -> GLsizei {
-        self.indices_count
     }
 }
 

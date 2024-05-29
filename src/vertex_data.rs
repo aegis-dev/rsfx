@@ -17,25 +17,7 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use std::mem;
-use gl::types::GLuint;
 use glam::{Vec3, Vec2};
-
-pub const VERTEX_POSITION_ATTRIBUTE_ID: GLuint = 0;
-pub const VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID: GLuint = 1;
-pub const VERTEX_NORMAL_ATTRIBUTE_ID: GLuint = 2;
-
-pub const VERTEX_DATA_ATTRIBUTES: &'static [GLuint] = &[VERTEX_POSITION_ATTRIBUTE_ID, VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_ID, VERTEX_NORMAL_ATTRIBUTE_ID];
-
-pub const VERTEX_DATA_POSITION_OFFSET: GLuint = 0;
-pub const VERTEX_DATA_TEXTURE_COORDINATE_OFFSET: GLuint = VERTEX_DATA_POSITION_OFFSET + mem::size_of::<Vec3>() as GLuint;
-pub const VERTEX_DATA_NORMAL_OFFSET: GLuint = VERTEX_DATA_TEXTURE_COORDINATE_OFFSET + mem::size_of::<Vec2>() as GLuint;
-
-pub const VERTEX_POSITION_ATTRIBUTE_SIZE_IN_FLOATS: GLuint = mem::size_of::<Vec3>() as GLuint / mem::size_of::<f32>() as GLuint;
-pub const VERTEX_TEXTURE_COORDINATE_ATTRIBUTE_SIZE_IN_FLOATS: GLuint = mem::size_of::<Vec2>() as GLuint / mem::size_of::<f32>() as GLuint;
-pub const VERTEX_NORMAL_ATTRIBUTE_SIZE_IN_FLOATS: GLuint = mem::size_of::<Vec3>() as GLuint / mem::size_of::<f32>() as GLuint;
-
-pub const VERTEX_DATA_SIZE: GLuint = mem::size_of::<VertexData>() as GLuint;
 
 #[repr(packed(4))]
 #[derive(Copy, Clone)]

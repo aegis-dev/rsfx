@@ -17,11 +17,10 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use gl::types::GLuint;
 use glam::{Vec3, Vec2};
 
 use crate::mesh::{Mesh, MeshData};
-use crate::internal::vertex_data::VertexData;
+use crate::vertex_data::VertexData;
 
 pub fn load_obj_data(obj_data: &str) -> MeshData {
     let lines: Vec<_> = obj_data.lines().collect();
@@ -29,8 +28,7 @@ pub fn load_obj_data(obj_data: &str) -> MeshData {
     let mut vertices: Vec<Vec3> = vec![];
     let mut texture_coords: Vec<Vec2> = vec![];
     let mut normals: Vec<Vec3> = vec![];
-    let mut indices: Vec<u32> = vec![];
-    
+
     let mut vertex_data: Vec<VertexData> = vec![];
     
     for line in &lines {
@@ -69,30 +67,42 @@ pub fn load_obj_data(obj_data: &str) -> MeshData {
         if line.starts_with("f ") {
             let mut splits: Vec<_> = line.split(" ").collect();
             splits.retain(|&x| x.len() != 0);
-            
-            for part in &splits {
-                if part.starts_with("f") {
-                    continue;
+
+            assert!(splits.len() == 4 || splits.len() == 5);
+
+            let mut triangulate = false;
+            if splits.len() == 5 {
+                triangulate = true;
+            }
+
+            let mut faces = vec![[1, 2, 3]];
+
+            if splits.len() == 5 {
+                faces.push([1, 3, 4]);
+            }
+
+            for face in faces {
+                for vert_idx in face {
+                    let vertex_info = splits[vert_idx];
+
+                    let mut vertex_indices: Vec<&str> = vertex_info.split('/').collect();
+                    vertex_indices.retain(|&x| x.len() != 0);
+                    let vertex_index = vertex_indices[0].parse::<i32>().unwrap() - 1;
+                    let texture_coord_index = vertex_indices[1].parse::<i32>().unwrap() - 1;
+                    let normal_index = vertex_indices[2].parse::<i32>().unwrap() - 1;
+
+                    let vertex = VertexData::new(
+                        vertices[vertex_index as usize],
+                        texture_coords[texture_coord_index as usize],
+                        normals[normal_index as usize]
+                    );
+                    vertex_data.push(vertex);
                 }
-                
-                let mut vertex_indices: Vec<&str> = part.split('/').collect();
-                vertex_indices.retain(|&x| x.len() != 0);
-                let vertex_index = vertex_indices[0].parse::<i32>().unwrap() - 1;
-                let texture_coord_index = vertex_indices[1].parse::<i32>().unwrap() - 1;
-                let normal_index = vertex_indices[2].parse::<i32>().unwrap() - 1;
-                
-                let vertex = VertexData::new(
-                    vertices[vertex_index as usize],
-                    texture_coords[texture_coord_index as usize],
-                    normals[normal_index as usize]
-                );
-                vertex_data.push(vertex);
-                indices.push(indices.len() as GLuint);
             }
         }
     }
-    
-    MeshData::from_data(vertex_data, indices)
+
+    MeshData::from_data(vertex_data)
 }
 
 pub fn load_obj_mesh(obj_data: &str) -> Mesh {
