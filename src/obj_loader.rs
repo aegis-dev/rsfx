@@ -17,6 +17,7 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
+use std::str::FromStr;
 use glam::{Vec3, Vec2};
 
 use crate::mesh::{Mesh, MeshData};
@@ -24,56 +25,51 @@ use crate::vertex_data::VertexData;
 
 pub fn load_obj_data(obj_data: &str) -> MeshData {
     let lines: Vec<_> = obj_data.lines().collect();
-        
+
     let mut vertices: Vec<Vec3> = vec![];
     let mut texture_coords: Vec<Vec2> = vec![];
     let mut normals: Vec<Vec3> = vec![];
 
-    let mut vertex_data: Vec<VertexData> = vec![];
-    
     for line in &lines {
-        let mut splits: Vec<_> = line.split(" ").collect();
+        let mut splits: Vec<_> = line.split_whitespace().collect();
         splits.retain(|&x| x.len() != 0);
-        
+
         if line.starts_with("v ") {
             vertices.push(
                 Vec3::new(
-                    splits[1].trim().parse().unwrap(),
-                    splits[2].trim().parse().unwrap(),
-                    splits[3].trim().parse().unwrap()
+                    f32::from_str(splits[1].trim()).unwrap(),
+                    f32::from_str(splits[2].trim()).unwrap(),
+                    f32::from_str(splits[3].trim()).unwrap()
                 )
             );
         }
         else if line.starts_with("vt ") {
             texture_coords.push(
                 Vec2::new(
-                    splits[1].trim().parse().unwrap(),
-                    splits[2].trim().parse().unwrap()
+                    f32::from_str(splits[1].trim()).unwrap(),
+                    f32::from_str(splits[2].trim()).unwrap()
                 )
             );
         }
         else if line.starts_with("vn ") {
             normals.push(
                 Vec3::new(
-                    splits[1].trim().parse().unwrap(),
-                    splits[2].trim().parse().unwrap(),
-                    splits[3].trim().parse().unwrap()
+                    f32::from_str(splits[1].trim()).unwrap(),
+                    f32::from_str(splits[2].trim()).unwrap(),
+                    f32::from_str(splits[3].trim()).unwrap()
                 )
             );
         }
     }
-    
+
+    let mut vertex_data: Vec<VertexData> = vec![];
+
     for line in &lines {
         if line.starts_with("f ") {
-            let mut splits: Vec<_> = line.split(" ").collect();
+            let mut splits: Vec<_> = line.split_whitespace().collect();
             splits.retain(|&x| x.len() != 0);
 
             assert!(splits.len() == 4 || splits.len() == 5);
-
-            let mut triangulate = false;
-            if splits.len() == 5 {
-                triangulate = true;
-            }
 
             let mut faces = vec![[1, 2, 3]];
 
@@ -87,9 +83,10 @@ pub fn load_obj_data(obj_data: &str) -> MeshData {
 
                     let mut vertex_indices: Vec<&str> = vertex_info.split('/').collect();
                     vertex_indices.retain(|&x| x.len() != 0);
-                    let vertex_index = vertex_indices[0].parse::<i32>().unwrap() - 1;
-                    let texture_coord_index = vertex_indices[1].parse::<i32>().unwrap() - 1;
-                    let normal_index = vertex_indices[2].parse::<i32>().unwrap() - 1;
+
+                    let vertex_index = i32::from_str(vertex_indices[0]).unwrap() - 1;
+                    let texture_coord_index = i32::from_str(vertex_indices[1]).unwrap() - 1;
+                    let normal_index = i32::from_str(vertex_indices[2]).unwrap() - 1;
 
                     let vertex = VertexData::new(
                         vertices[vertex_index as usize],

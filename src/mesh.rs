@@ -24,7 +24,7 @@ use std::ptr::null;
 use gl::types::{GLuint, GLsizei, GLint, GLfloat};
 use crate::internal::vertex_attributes;
 
-use crate::vertex_data::{self, VertexData};
+use crate::vertex_data::VertexData;
 
 pub struct MeshData {
     vertex_data: Vec<VertexData>,

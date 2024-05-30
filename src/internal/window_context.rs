@@ -35,7 +35,7 @@ pub struct WindowContext {
 }
 
 impl WindowContext {
-    pub fn new(game_name: &str) -> Result<WindowContext, String> {
+    pub fn new(game_name: &str, vsync: bool) -> Result<WindowContext, String> {
         let sdl = sdl2::init().unwrap();
         let video_subsystem = sdl.video().unwrap();
         let gl_attr = video_subsystem.gl_attr();
@@ -63,8 +63,8 @@ impl WindowContext {
 
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
-        // disable vsync
-        video_subsystem.gl_set_swap_interval(0).unwrap();
+        // Vsync
+        video_subsystem.gl_set_swap_interval(vsync as i32).unwrap();
 
         Ok(WindowContext {
             sdl,
@@ -93,11 +93,6 @@ impl WindowContext {
             };
         }
     }
-    //
-    // pub fn poll_sdl_input_event(&mut self) -> Option<Event> {
-    //     let mut event_pump = self.sdl.event_pump().unwrap();
-    //     event_pump.poll_event()
-    // }
 
     pub fn swap_buffer(&self) {
         self.window.gl_swap_window(); 

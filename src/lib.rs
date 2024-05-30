@@ -35,6 +35,7 @@ pub mod matrices;
 pub mod math;
 pub mod collision;
 pub mod vertex_data;
+pub mod transform;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
@@ -43,18 +44,20 @@ use crate::internal::gl_renderer::GlRenderer;
 use crate::internal::window_context::WindowContext;
 use crate::renderer::Renderer;
 
+// 60 ticks per second
+const TICKS_PER_SECOND: u32 = 60;
+const TICK_RATE: u128 = (1.0f64 / TICKS_PER_SECOND as f64 * 1000.0f64) as u128;
+
 pub struct Rsfx;
 
 impl Rsfx {
-    const TICK_RATE: u128 = (1.0f64 / 60.0f64 * 1000.0f64) as u128;
-
     pub fn new() -> Rsfx {
         Rsfx { }
     }
 
     // This func is mutable to ensure that this object is not used more than once when game is running
-    pub fn run(&mut self, game_name: &str, starting_scene: Box<dyn Scene>) -> Result<(), String> {
-        let mut window_context = WindowContext::new(game_name)?;
+    pub fn run(&mut self, game_name: &str, vsync: bool, starting_scene: Box<dyn Scene>) -> Result<(), String> {
+        let mut window_context = WindowContext::new(game_name, vsync)?;
 
         let display_width = window_context.get_display_width();
         let display_height = window_context.get_display_height();
@@ -90,7 +93,7 @@ impl Rsfx {
             }
 
             let time_now = WindowContext::time_now();
-            if time_now >= last_frame_time + Rsfx::TICK_RATE {
+            if time_now >= last_frame_time + TICK_RATE {
                 let delta_time = time_now - last_frame_time;
                 last_frame_time = time_now;
 

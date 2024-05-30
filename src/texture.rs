@@ -48,12 +48,14 @@ impl Texture {
             Err(error) => return Err(error.to_string())
         };
     
-        let mut raw_image_data = vec![0; reader.output_buffer_size()];
-        match reader.next_frame(&mut raw_image_data) {
-            Err(error) => return Err(error.to_string()),
-            _ => { }
-        };
-    
+        let mut raw_image_data: Vec<u8> = vec![];
+
+        while let Ok(Some(row)) = reader.next_row() {
+            let mut new_vec = row.to_vec();
+            new_vec.extend(&raw_image_data);
+            raw_image_data = new_vec;
+        }
+
         let info = reader.info();
         let width = info.width as usize;
         let height = info.height as usize;
@@ -73,7 +75,7 @@ impl Texture {
                 );
             }
         };
-        
+
         Ok(Texture::from_data(&raw_image_data, width as u32, height as u32, mode))
     }
     
