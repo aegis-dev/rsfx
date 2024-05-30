@@ -41,6 +41,8 @@ pub trait Transformable {
     fn set_scale(&mut self, scale: f32);
 
     fn get_matrix(&self) -> Mat4;
+
+    fn add(&self, other: &Transform) -> Transform;
 }
 
 impl Transform {
@@ -76,5 +78,13 @@ impl Transformable for Transform {
 
     fn get_matrix(&self) -> Mat4 {
         build_transformation_matrix(&self.position, &self.rotation, self.scale)
+    }
+
+    fn add(&self, other: &Transform) -> Transform {
+        Transform::new(
+          self.position + other.position,
+          self.rotation + other.rotation,
+          self.scale + other.scale
+        )
     }
 }

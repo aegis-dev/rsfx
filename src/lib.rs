@@ -36,6 +36,7 @@ pub mod math;
 pub mod collision;
 pub mod vertex_data;
 pub mod transform;
+pub mod transform_animation;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
