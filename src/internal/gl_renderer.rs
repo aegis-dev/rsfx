@@ -48,7 +48,11 @@ pub struct GlRenderer {
 impl GlRenderer {
     pub fn new(framebuffer_width: i32, framebuffer_height: i32, window_width: i32, window_height: i32) -> GlRenderer {
         unsafe {
-    
+            // Enable back face culling
+            gl::Enable(gl::CULL_FACE);
+            gl::CullFace(gl::BACK);
+            gl::FrontFace(gl::CCW);
+
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
@@ -82,14 +86,14 @@ impl GlRenderer {
                 &CString::new(include_str!("shaders/screen_shader.frag")).unwrap(),
             )
         };
-        
+
         let quad_data: Vec<VertexData> = vec![
-            VertexData::new(Vec3::new(-1.0, -1.0, 0.0), Vec2::new(0.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
-            VertexData::new(Vec3::new(-1.0,  1.0, 0.0), Vec2::new(0.0, 1.0), Vec3::new(0.0, 0.0, 0.0)),
             VertexData::new(Vec3::new( 1.0,  1.0, 0.0), Vec2::new(1.0, 1.0), Vec3::new(0.0, 0.0, 0.0)),
-            VertexData::new(Vec3::new( 1.0, -1.0, 0.0), Vec2::new(1.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
             VertexData::new(Vec3::new(-1.0, -1.0, 0.0), Vec2::new(0.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
-            VertexData::new(Vec3::new( 1.0,  1.0, 0.0), Vec2::new(1.0, 1.0), Vec3::new(0.0, 0.0, 0.0))
+            VertexData::new(Vec3::new( 1.0, -1.0, 0.0), Vec2::new(1.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
+            VertexData::new(Vec3::new( 1.0,  1.0, 0.0), Vec2::new(1.0, 1.0), Vec3::new(0.0, 0.0, 0.0)),
+            VertexData::new(Vec3::new(-1.0,  1.0, 0.0), Vec2::new(0.0, 1.0), Vec3::new(0.0, 0.0, 0.0)),
+            VertexData::new(Vec3::new(-1.0, -1.0, 0.0), Vec2::new(0.0, 0.0), Vec3::new(0.0, 0.0, 0.0)),
         ];
         let screen_quad = Mesh::from_raw_data(&quad_data);
         
