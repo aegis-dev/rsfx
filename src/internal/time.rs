@@ -17,14 +17,8 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use glam::Vec3;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub mod aabb;
-pub mod static_world;
-pub mod colliders;
-
-#[derive(Copy, Clone, PartialEq)]
-pub enum CollisionResult {
-    Nothing,
-    Collides(Vec3)
+pub fn time_now() -> u128 {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
 }

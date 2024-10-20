@@ -68,13 +68,15 @@ pub fn load_obj_data(obj_data: &str) -> MeshData {
         if line.starts_with("f ") {
             let mut splits: Vec<_> = line.split_whitespace().collect();
             splits.retain(|&x| x.len() != 0);
+            splits.remove(0);
 
-            assert!(splits.len() == 4 || splits.len() == 5);
+            let mut faces = vec![[0, 1, 2]];
 
-            let mut faces = vec![[1, 2, 3]];
-
-            if splits.len() == 5 {
-                faces.push([1, 3, 4]);
+            // triangulate face that has more than 3 vertices
+            if splits.len() >= 4 {
+                for i in 4..=splits.len() {
+                    faces.push([0, i - 2, i - 1]);
+                }
             }
 
             for face in faces {

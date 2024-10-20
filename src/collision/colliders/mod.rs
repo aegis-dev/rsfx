@@ -17,14 +17,16 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
+pub mod face;
+pub mod sphere;
+
 use glam::Vec3;
 
-pub mod aabb;
-pub mod static_world;
-pub mod colliders;
+use self::sphere::Sphere;
 
-#[derive(Copy, Clone, PartialEq)]
-pub enum CollisionResult {
-    Nothing,
-    Collides(Vec3)
+use super::CollisionResult;
+
+pub trait Collidable {
+    fn test_ray(&self, position: &Vec3, direction: &Vec3, distance: f32) -> CollisionResult;
+    fn test_sphere(&self, sphere: &Sphere) -> CollisionResult;
 }

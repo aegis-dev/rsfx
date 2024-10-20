@@ -17,6 +17,7 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
+pub(crate) mod time;
 pub(crate) mod byte_buffer_reader;
 pub(crate) mod gl_renderer;
 pub(crate) mod window_context;
@@ -27,3 +28,4 @@ pub(crate) mod render_passes;
 pub(crate) mod renderable;
 pub(crate) mod renderer_command;
 pub(crate) mod vertex_attributes;
+

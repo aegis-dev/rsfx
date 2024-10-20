@@ -35,7 +35,7 @@ pub struct WindowContext {
 }
 
 impl WindowContext {
-    pub fn new(game_name: &str, vsync: bool) -> Result<WindowContext, String> {
+    pub fn new(game_name: &str, vsync: bool, fullscreen: bool) -> Result<WindowContext, String> {
         let sdl = sdl2::init().unwrap();
         let video_subsystem = sdl.video().unwrap();
         let gl_attr = video_subsystem.gl_attr();
@@ -52,12 +52,23 @@ impl WindowContext {
         let display_width = current_display.width() as i32;
         let display_height = current_display.height() as i32;
 
-        let window = video_subsystem
-            .window(game_name, display_width as u32, display_height as u32)
-            .opengl()
-            .borderless()
-            .build()
-            .unwrap();
+        let window = match fullscreen {
+            true => {
+                video_subsystem
+                    .window(game_name, display_width as u32, display_height as u32)
+                    .opengl()
+                    .borderless()
+                    .build()
+                    .unwrap()
+            }
+            false => {
+                video_subsystem
+                    .window(game_name, (display_width as f32 * 0.9) as u32 , (display_height as f32 * 0.9) as u32 )
+                    .opengl()
+                    .build()
+                    .unwrap()
+            }
+        };
 
         let gl_context = window.gl_create_context().unwrap();
 
@@ -96,10 +107,6 @@ impl WindowContext {
 
     pub fn swap_buffer(&self) {
         self.window.gl_swap_window(); 
-    } 
-
-    pub fn time_now() -> u128 {
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     }
 }
 

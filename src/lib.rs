@@ -37,11 +37,14 @@ pub mod collision;
 pub mod vertex_data;
 pub mod transform;
 pub mod transform_animation;
+pub mod graphics_settings;
 
 use crate::scene::Scene;
 use crate::game_status::GameStatus;
+use crate::graphics_settings::{GraphicsSettings, RenderResolution};
 use crate::input::Input;
 use crate::internal::gl_renderer::GlRenderer;
+use crate::internal::time;
 use crate::internal::window_context::WindowContext;
 use crate::renderer::Renderer;
 
@@ -57,14 +60,24 @@ impl Rsfx {
     }
 
     // This func is mutable to ensure that this object is not used more than once when game is running
-    pub fn run(&mut self, game_name: &str, vsync: bool, starting_scene: Box<dyn Scene>) -> Result<(), String> {
-        let mut window_context = WindowContext::new(game_name, vsync)?;
+    pub fn run(&mut self, game_name: &str, graphics_settings: GraphicsSettings, starting_scene: Box<dyn Scene>) -> Result<(), String> {
+        let mut window_context = WindowContext::new(game_name, graphics_settings.vsync, graphics_settings.fullscreen)?;
 
         let display_width = window_context.get_display_width();
         let display_height = window_context.get_display_height();
 
-        let framebuffer_width = 854;
-        let framebuffer_height = 480;
+        let framebuffer_width = match graphics_settings.render_resolution {
+            RenderResolution::W427h240 => 427,
+            RenderResolution::W640h360 => 640,
+            RenderResolution::W854h480 => 854,
+            RenderResolution::Native => display_width
+        };
+        let framebuffer_height = match graphics_settings.render_resolution {
+            RenderResolution::W427h240 => 240,
+            RenderResolution::W640h360 => 360,
+            RenderResolution::W854h480 => 480,
+            RenderResolution::Native => display_height
+        };
 
         let gl_renderer = GlRenderer::new(framebuffer_width, framebuffer_height, display_width, display_height);
 
@@ -79,21 +92,21 @@ impl Rsfx {
         );
 
         let mut current_scene = starting_scene;
-        
+
         current_scene.on_start(&mut renderer);
-        
-        let delta_time = WindowContext::time_now();
+
+        let delta_time = time::time_now();
         let mut last_frame_time = delta_time;
 
         let mut game_status = GameStatus::new();
         'main_loop: loop {
             window_context.poll_input_events(&mut input);
-            
+
             if input.should_quit() {
                 break 'main_loop;
             }
 
-            let time_now = WindowContext::time_now();
+            let time_now = time::time_now();
             if time_now >= last_frame_time + TICK_RATE {
                 let delta_time = time_now - last_frame_time;
                 last_frame_time = time_now;
@@ -112,14 +125,15 @@ impl Rsfx {
                     }
                     _ => {
                         if game_status.should_quit() {
+                            current_scene.on_destroy();
                             break 'main_loop
                         }
                     }
                 };
-                
+
                 input.clear_states();
             }
-            
+
             current_scene.on_render(&mut renderer);
 
             renderer.run_passes();
