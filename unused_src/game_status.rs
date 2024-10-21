@@ -17,16 +17,20 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-// use crate::input::Input;
-// use crate::renderer::Renderer;
-// use crate::game_status::GameStatus;
+pub struct GameStatus {
+    should_quit: bool,
+}
 
-pub trait Scene {
-    // fn on_start(&mut self, renderer: &mut Renderer);
+impl GameStatus {
+    pub fn new() -> GameStatus {
+        GameStatus { should_quit: false }
+    }
 
-    // // fn on_update(&mut self, game_status: &mut GameStatus, renderer: &mut Renderer, input: &Input, delta_time: f64) -> Option<Box<dyn Scene>>;
-    
-    // fn on_render(&mut self, renderer: &mut Renderer);
+    pub fn quit(&mut self) {
+        self.should_quit = true;
+    }
 
-    fn on_destroy(&mut self);
+    pub fn should_quit(&self) -> bool {
+        self.should_quit
+    }
 }

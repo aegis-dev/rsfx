@@ -17,96 +17,67 @@
 // along with RSFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
-use std::time::{SystemTime, UNIX_EPOCH};
-
-use sdl2::Sdl;
-use sdl2::VideoSubsystem;
-use sdl2::video::{GLContext, Window};
-
-use crate::input::Input;
+use winit::application::ApplicationHandler;
+use winit::event::WindowEvent;
+use winit::event_loop::{ActiveEventLoop, EventLoop};
+use winit::platform::pump_events::{EventLoopExtPumpEvents, PumpStatus};
+use winit::window::{Fullscreen, Window, WindowAttributes, WindowId};
 
 pub struct WindowContext {
-    sdl: Sdl,
-    video_subsystem: VideoSubsystem,
-    window: Window,
-    gl_context: GLContext,
-    display_width: i32,
-    display_height: i32,
+    initialized: bool,
+    window_title: String, 
+    fullscreen: bool,
+    window: Option<Box<Window>>,
 }
 
 impl WindowContext {
-    pub fn new(game_name: &str, vsync: bool, fullscreen: bool) -> Result<WindowContext, String> {
-        let sdl = sdl2::init().unwrap();
-        let video_subsystem = sdl.video().unwrap();
-        let gl_attr = video_subsystem.gl_attr();
-
-        gl_attr.set_context_major_version(4);
-        gl_attr.set_context_minor_version(5);
-
-        // Hide mouse cursor
-        sdl.mouse().show_cursor(false);
-        sdl.mouse().set_relative_mouse_mode(true);
-
-        // Get primary display bounds
-        let current_display = video_subsystem.display_bounds(0)?;
-        let display_width = current_display.width() as i32;
-        let display_height = current_display.height() as i32;
-
-        let window = match fullscreen {
-            true => {
-                video_subsystem
-                    .window(game_name, display_width as u32, display_height as u32)
-                    .opengl()
-                    .borderless()
-                    .build()
-                    .unwrap()
-            }
-            false => {
-                video_subsystem
-                    .window(game_name, (display_width as f32 * 0.9) as u32 , (display_height as f32 * 0.9) as u32 )
-                    .opengl()
-                    .build()
-                    .unwrap()
-            }
-        };
-
-        let gl_context = window.gl_create_context().unwrap();
-
-        gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
-
-        // Vsync
-        video_subsystem.gl_set_swap_interval(vsync as i32).unwrap();
-
-        Ok(WindowContext {
-            sdl,
-            video_subsystem,
-            window,
-            gl_context,
-            display_width,
-            display_height,
-        })
-    }
-
-    pub fn get_display_width(&self) -> i32 {
-        self.display_width
-    }
-
-    pub fn get_display_height(&self) -> i32 {
-        self.display_height
-    }
-
-    pub fn poll_input_events(&mut self, input: &mut Input) {
-        let mut event_pump = self.sdl.event_pump().unwrap();
-        for event in event_pump.poll_iter() {
-            match input.process_sdl_event(&event) {
-                Err(error) => println!("{}", error),
-                Ok(_) => {}
-            };
+    pub fn new(window_title: &str, fullscreen: bool) -> WindowContext {
+        WindowContext { 
+            initialized: false, 
+            window_title: String::from(window_title), 
+            fullscreen,
+            window: None,  
         }
-    }
-
-    pub fn swap_buffer(&self) {
-        self.window.gl_swap_window(); 
     }
 }
 
+impl ApplicationHandler for WindowContext {
+    
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if !self.initialized {
+            let mut window_attributes = WindowAttributes::default();
+            window_attributes = window_attributes.with_title(self.window_title.as_str());
+            window_attributes = window_attributes.with_resizable(false);
+    
+            if self.fullscreen {
+                window_attributes = window_attributes.with_fullscreen(Some(Fullscreen::Borderless(None)))
+            }
+                                                
+            self.window = Some(Box::new(event_loop.create_window(window_attributes).unwrap()));
+        }
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
+    ) {
+
+        let window = match self.window.as_ref() {
+            Some(window) => window,
+            None => return,
+        };
+
+        match event {
+            WindowEvent::CloseRequested => event_loop.exit(),
+            WindowEvent::RedrawRequested => {
+                // TODO: draw here
+                
+                window.request_redraw();
+            },
+            _ => (),
+        }
+
+    }
+}
