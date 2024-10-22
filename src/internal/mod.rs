@@ -18,4 +18,5 @@
 //
 
 pub(crate) mod time;
-pub(crate) mod window_context;
+pub(crate) mod game_context;
+pub(crate) mod wgpu_renderer;

@@ -24,6 +24,8 @@ pub extern crate glam;
 pub mod game_status;
 pub mod graphics_settings;
 pub mod scene;
+pub mod input;
+pub mod renderer;
 
 mod internal;
 
@@ -31,7 +33,7 @@ use winit::event_loop::EventLoop;
 
 use scene::Scene;
 use graphics_settings::GraphicsSettings;
-use internal::window_context::{self, WindowContext};
+use internal::game_context::GameContext;
 
 // 60 ticks per second
 const TICKS_PER_SECOND: u32 = 60;
@@ -53,11 +55,12 @@ impl Rsfx {
     ) {
         let event_loop: EventLoop<()> = EventLoop::new().unwrap();
 
-        let mut window_context = WindowContext::new(
-            game_name, 
-            false
+        let mut context = GameContext::new(
+            game_name,
+            graphics_settings,
+            starting_scene
         );
 
-        let _ = event_loop.run_app(&mut window_context);
+        let _ = event_loop.run_app(&mut context);
     }
 }
